@@ -35,9 +35,12 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
-    --text-h: #f3f4f6;
+    --text-l: #f3f4f6;
+    --text-d: #000000;
+    --text-orange: #F9913A;
     --bg: #1B1B23;
-    --border: #2e303a;
+    --border: #46464F;
+    --bg2: #B95F00;
     --code-bg: #1f2028;
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
@@ -50,5 +53,6 @@
 
 body {
   margin: 0;
+  overflow:hidden
 }
 

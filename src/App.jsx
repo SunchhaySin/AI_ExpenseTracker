@@ -14,7 +14,7 @@ function App() {
   // }
 
   return (
-    <div className="grid grid-cols-[300px_1fr_300px] min-h-screen">
+    <div className="grid grid-cols-[0.35fr_1fr_0.35fr] min-h-screen">
       {/* <header class="text-(--text) text-2xl font-bold ">AI-Delivered Expense Tracker</header>
       <button onClick={handleCounter}>Counter: {count}</button>
       <h1 class="text-3xl font-bold underline">
