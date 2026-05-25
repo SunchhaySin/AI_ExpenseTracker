@@ -14,7 +14,7 @@ export default function Summarybar() {
     }, [])
 
   return (
-    <div className="bg-(--code-bg) flex justify-between p-4">
+    <div className="bg-(--code-bg) p-4">
       <div className="flex justify-between p-3 border border-(--border) w-full h-fit rounded-full bg-(--bg)">
         <p className="text-(--text-orange)">{time.toLocaleTimeString()}</p>
         <p className="text-(--text-orange)">{time.toDateString()}</p>
