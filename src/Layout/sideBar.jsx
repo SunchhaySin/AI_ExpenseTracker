@@ -1,8 +1,8 @@
 import React from 'react'
 import { useRef, useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-export default function Sidebar({ onLoginClick, onSignupClick }) {
-
+export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onLogoutClick}) {
     const onLogin = () => {
         onLoginClick()
     }
@@ -11,6 +11,14 @@ export default function Sidebar({ onLoginClick, onSignupClick }) {
         onSignupClick()
     }
 
+    const onLogout = () => {
+        onLogoutClick();
+    }
+    const goToProfile = () => {
+        navigate('/profile') 
+      }
+    
+    const navigate = useNavigate()
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [fileExist, setFileExist] = useState(false)
     const fileInputRef = useRef(null);
@@ -28,16 +36,28 @@ export default function Sidebar({ onLoginClick, onSignupClick }) {
     const removeFile = (index) => {
         setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
     };
-    
+
     return (
         <div className="flex flex-col bg-(--code-bg) p-4">
             <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full border border-(--border) bg-(--bg2) content-center justify-items-center">
-                    <img src="src/assets/noProfile.png" className="h-10" />
+                    <img src="src/assets/noProfile.png" className="h-10" onClick={goToProfile}/>
                 </div>
                 <div className="flex justify-between flex-1 border border-(--border) bg-(--bg) rounded-full p-1">
-                    <p className="text-(--text-orange) text-l p-2">Not Logged In</p>
-                    <button className="bg-(--bg2) text-(--text-l) rounded-full p-2 hover:bg-(--text-orange)" onClick={onLogin}>Login</button>
+                    <p className="text-(--text-orange) text-l p-2">
+                        {loggedInUser.username ? `${loggedInUser.username}` : "Not Logged In"}
+                    </p>
+                    {!loggedInUser.username && (
+                        <button className="bg-(--bg2) text-(--text-l) rounded-full p-2 hover:bg-(--text-orange)" onClick={onLogin}>
+                            Login
+                        </button>
+                    )}
+
+                    {loggedInUser.username && (
+                        <button className="bg-(--bg2) text-(--text-l) rounded-full p-2 hover:bg-(--text-orange)" onClick={onLogout}>
+                            Logout
+                        </button>
+                    )}
                 </div>
             </div>
             <div className="flex flex-col  mt-8">
@@ -60,7 +80,7 @@ export default function Sidebar({ onLoginClick, onSignupClick }) {
                         <li key={index} className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 ">
                             <span className="text-[var(--text)]">{file.name}</span>
                             <span onClick={() => removeFile(index)}>
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#E3E3E3"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#E3E3E3"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" /></svg>
                             </span>
                         </li>
                     ))}

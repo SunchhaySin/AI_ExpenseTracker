@@ -3,9 +3,12 @@
 :root {
   --text: #6b6375;
   --text-h: #08060d;
+  --text-green: #00A392;
+  --sub-text-green: #006B5F;
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
+  --bg-green: #003731;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
@@ -38,9 +41,12 @@
     --text-l: #f3f4f6;
     --text-d: #000000;
     --text-orange: #F9913A;
+    --text-green: #00A392;
+    --sub-text-green: #006B5F;
     --bg: #1B1B23;
     --border: #46464F;
     --bg2: #B95F00;
+    --bg-green: #003731;
     --code-bg: #1f2028;
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
