@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Profile({ loggedInUser }) {
@@ -7,7 +7,10 @@ export default function Profile({ loggedInUser }) {
     const goToDashboard = () => {
         navigate('/')  
     }
-    console.log(user)
+    const [editProfile, setEditProfile] = useState(false);
+    const onEditBtn = () => {
+        setEditProfile(!editProfile)
+    }
     return (
         <div className="flex flex-col bg-(--bg) place-items-center">
             <header className="flex items-center justify-between bg-(--bg2) w-11/12 m-3 p-1 rounded-full">
@@ -20,18 +23,35 @@ export default function Profile({ loggedInUser }) {
                 <p className="text-(--text-green) text-lg">Profile</p>
             </div>
             <p className="self-start ml-20 text-(--sub-text-green) text-sm">Your Personal Profile & Information</p>
+            <div className="w-40 h-40 rounded-full bg-(--code-bg) text-(--text-l)">Not Set</div>
             <ul className="mt-10 flex flex-col gap-2">
-                <li className="flex items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
-                    <p className="text-(--text-d) p-2 rounded-lg">Email</p>
-                    <input placeholder={user?.email || "Info Not Available"} 
-                        className="bg-(--code-bg) p-2 text-center text-(--text-l) rounded-lg" />
+                <li className="grid grid-cols-2 items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
+                    <p className="text-(--text-orange) text-lg p-2 rounded-lg">Email</p>
+                    <input defaultValue={user?.email || "Info Not Available"} 
+                        className="bg-(--code-bg) p-2 text-center text-(--text) rounded-lg" />
                 </li>
-                <li className="flex items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
-                    <p className="text-(--text-d) p-2 rounded-lg">Username</p>
-                    <input placeholder={user?.username || "Info Not Available"} 
-                        className="bg-(--code-bg) p-2 text-center text-(--text-l) rounded-lg" />
+                <li className="grid grid-cols-2 items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
+                    <p className="text-(--text-orange) text-lg p-2 rounded-lg">Username</p>
+                    <input defaultValue={user?.username || "Info Not Available"} 
+                        className="bg-(--code-bg) p-2 text-center text-(--text) rounded-lg" />
+                </li>
+                <li className="grid grid-cols-2 items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
+                    <p className="text-(--text-orange) text-lg p-2 rounded-lg">Password</p>
+                    <input defaultValue={user?.username || "Info Not Available"} 
+                        className="bg-(--code-bg) p-2 text-center text-(--text) rounded-lg" />
+                </li>
+                <li className="grid grid-cols-2 items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
+                    <p className="text-(--text-orange) text-lg p-2 rounded-lg">Profile Avatar</p>
+                    <button onClick={onEditBtn} className="bg-(--bg2) text-(--text-d) p-2 rounded-lg hover:bg-(--text-orange)">Set Profile</button>
                 </li>
             </ul>
+            {editProfile && 
+                <div className="flex mt-10 bg-(--bg2) p-2 gap-5 items-center rounded-lg">
+                    <p className="font-semibold">Upload Picture:</p>
+                    <input className="bg-(--code-bg) p-2 rounded-lg text-(--text-l)" />
+                    <button className="bg-(--text-green) rounded-full p-1 text-(--text-d)">Confirm</button>
+                </div>
+            }
         </div>
     )
 }

@@ -37,6 +37,47 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
         setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
     };
 
+    async function uploadFile() {
+        try {
+            const file = selectedFiles[0]; 
+            
+            if (!file) {
+                alert("Please select a file first.");
+                return;
+            }
+    
+            const base64String = await convertToBase64(file);
+    
+            const result = await fetch('http://localhost:3000/api/scan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ imageBase64: base64String })
+            });
+            
+            const data = await result.json();
+            console.log(data);
+    
+        } catch(error) {
+            console.error(error);
+            alert(error.message);
+        }
+    }
+
+    function convertToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(file);
+            
+            fileReader.onload = () => {
+                resolve(fileReader.result);
+            };
+            
+            fileReader.onerror = (error) => {
+                reject(error);
+            };
+        });
+    }
+
     return (
         <div className="flex flex-col bg-(--code-bg) p-4">
             <div className="flex items-center gap-4">
@@ -77,7 +118,9 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                 {fileExist && <p className="text-(--text) mt-10">Uploaded Files</p>}
                 <ul className="mt-2">
                     {selectedFiles.map((file, index) => (
-                        <li key={index} className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 ">
+                        <li key={index} 
+                            onClick={uploadFile}
+                            className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 ">
                             <span className="text-[var(--text)]">{file.name}</span>
                             <span onClick={() => removeFile(index)}>
                                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#E3E3E3"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" /></svg>
