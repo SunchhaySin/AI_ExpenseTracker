@@ -21,7 +21,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
     const navigate = useNavigate()
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [fileExist, setFileExist] = useState(false)
-    const [imageText, setImageText] = useState("");
+    const [imageText, setImageText] = useState([]);
     const [imagePreview, setImagePreview] = useState("");
     const fileInputRef = useRef(null);
 
@@ -68,7 +68,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
     }
 
     async function handleFile(index) {
-        setImageText("");
+        setImageText([]);
         try {
             const base64File = await convertToBase64(uploadedFiles[index]);
 
@@ -85,8 +85,47 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
 
             const data = await result.json();
             console.log(data);
+            if (!data.data) {  
+                alert("Unstable AI Processing.");
+                return;
+            }
             setImageText(data.data)
             console.log(imageText)
+
+            if(loggedInUser.userID) {
+                if (data.data.type == "transaction") {
+                    const uploadResult = await fetch('http://localhost:3000/upload/invoice', {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(
+                        { data: 
+                            {
+                                ...data.data,
+                                userID: loggedInUser.userID
+                            }
+                        })
+                    })
+
+                    if (!uploadResult.ok) { 
+                        const err = await uploadResult.json();
+                        console.error(err.error);
+                    }
+                    console.log("Uploaded Invoice", uploadResult)
+
+                } else if (data.data.type == "receipt") {
+                    const uploadResult = await fetch('http://localhost:3000/upload/receipt', {
+                        method: "POST",
+                        headers: { 'Content-Type' : 'application/json'},
+                        body: JSON.stringify({...data.data, userID: loggedInUser.userID})
+                    })
+                    const response = await uploadResult.json();
+                    console.log("Receipt response:", response);
+                    if(!uploadResult.ok) {
+                        console.error(response.error);
+                    }
+                    console.log("Uploaded Receipt", uploadResult)
+                }
+            }
 
         } catch (error) {
             console.error(error);
@@ -146,7 +185,9 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                     <p>Upload</p>
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black"><path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" /></svg>
                 </button>
-                <p>{imageText}</p>
+                {/* <Text>{result.senderName}</Text>
+                <Text>{result.amount}</Text>
+                <Text>{result.merchantName}</Text> */}
                 {fileExist && <p className="text-(--text) mt-5">Uploaded Files</p>}
                 <ul className="mt-2 overflow-y-auto max-h-[200px]">
                     {uploadedFiles.map((file, index) => (

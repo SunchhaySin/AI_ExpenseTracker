@@ -99,10 +99,12 @@ function App() {
 
       sessionStorage.setItem("email", data.email)
       sessionStorage.setItem("username", data.username);
+      sessionStorage.setItem("userID", data.userID)
 
       setUser({
         username: data.username,
         email: data.email,
+        userID: data.userID,
       })
 
       alert("User Login Sucessful")

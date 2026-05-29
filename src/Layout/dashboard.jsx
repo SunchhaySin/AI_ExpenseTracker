@@ -39,12 +39,11 @@ export default function Dashboard() {
           <div className="text-2xl text-(--text-l) font-bold">AI-Powered Expense Tracker</div>
           <button className="bg-white text-(--text-d) rounded-full p-2">Login</button>
         </header>
-        <div className="grid grid-cols-[1fr_1fr_1fr] gap-6 text-(--text-l) w-9/11 h-1/4 mt-8">
-          <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3">Today's Spendings</div>
-          <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3">Monthly Spendings</div>
+        <div className="grid grid-cols-[1fr_1fr] gap-6 text-(--text-l) w-9/11 h-1/3 mt-8">
+          <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3">Upload Details</div>
           <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3">Total Spendings</div>
         </div>
-        <div className="flex justify-between w-9/11 h-1/2 bg-(--code-bg) mt-18 rounded-xl border border-(--border) px-6 py-3">
+        <div className="flex justify-between w-9/11 h-1/2 bg-(--code-bg) mt-6 rounded-xl border border-(--border) px-6 py-3">
           <p className="text-(--text-orange) text-xl w-fit h-fit p-2.5 bg-(--bg) rounded-full">Expense Analysis</p>
           <div className="flex flex-col h-fit">
            <div onClick={handleSelect}
