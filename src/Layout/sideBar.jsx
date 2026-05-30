@@ -1,8 +1,8 @@
 import React from 'react'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onLogoutClick }) {
+export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onLogoutClick, onUploadResult}) {
     const onLogin = () => {
         onLoginClick()
     }
@@ -39,6 +39,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
         setUploadedFiles(updatedFiles);
         console.log("Files", updatedFiles)
         setFileExist(true)
+        files.forEach((file, i) => handleFile(uploadedFiles.length + i, file));
     };
 
     const triggerFileDialog = () => {
@@ -67,10 +68,11 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
 
     }
 
-    async function handleFile(index) {
+    const handleFile = useCallback(async (index, fileOverride = null) => {
         setImageText([]);
         try {
-            const base64File = await convertToBase64(uploadedFiles[index]);
+            const file = fileOverride ?? uploadedFiles[index];
+            const base64File = await convertToBase64(file);
 
             if (!base64File) {
                 alert("No Files Uploaded.");
@@ -91,6 +93,29 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
             }
             setImageText(data.data)
             console.log(imageText)
+
+            const callbackReceiptResult = {
+                "biller" : data.data.biller,
+                "date" : data.data.date,
+                "amount" : data.data.total_amount,
+                "currency" : data.data.currency,
+                "type" : "receipt",
+            }
+            const callbackInvoiceResult = {
+                "merchant" : data.data.merchantName,
+                "data": data.data.date,
+                "amount": data.data.amount,
+                "currency": data.data.currency,
+                "type": "transaction"
+            }
+
+            if(data.data.type == "transaction"){
+                onUploadResult(callbackInvoiceResult)
+            } else if (data.data.type == "receipt"){
+                onUploadResult(callbackReceiptResult)
+            } else {
+                return;
+            }
 
             if(loggedInUser.userID) {
                 if (data.data.type == "transaction") {
@@ -125,13 +150,16 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                     }
                     console.log("Uploaded Receipt", uploadResult)
                 }
+            } else {
+                console.log("Not Logged In")
+                return {message : "Couldn't Process Upload Futher"}
             }
 
         } catch (error) {
             console.error(error);
             alert(error.message);
         }
-    }
+    }, [uploadedFiles, loggedInUser, onUploadResult])
 
     function convertToBase64(file) {
         return new Promise((resolve, reject) => {

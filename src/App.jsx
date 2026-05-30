@@ -8,14 +8,20 @@ import Profile from './Layout/profile'
 function App() {
   const [login, setLogin] = useState(false);
   const [signup, setSignup] = useState(false);
-  const [user, setUser] = useState(() => {
-    const username = sessionStorage.getItem("username")
-    const email = sessionStorage.getItem("email")
-    return {
-      username: username || "",
-      email: email || ""
-    }
-  });
+  const [uploadResult, setUploadResult] = useState(null);
+  const [user, setUser] = useState({});
+  
+  useEffect(() => {
+    fetch('http://localhost:3000/auth/me', {
+      credentials: 'include'  
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Not logged in");
+        return res.json();
+      })
+      .then(user => setUser(user))
+      .catch(() => setUser({}));
+  }, []);
 
   const openLogin = () => {
     setLogin(!login)
@@ -67,6 +73,7 @@ function App() {
       const res = await fetch('http://localhost:3000/reg', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify(signupForm)
       })
       const data = await res.json()
@@ -91,15 +98,12 @@ function App() {
       const res = await fetch('http://localhost:3000/login', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', 
         body: JSON.stringify(loginForm)
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       console.log(data)
-
-      sessionStorage.setItem("email", data.email)
-      sessionStorage.setItem("username", data.username);
-      sessionStorage.setItem("userID", data.userID)
 
       setUser({
         username: data.username,
@@ -120,25 +124,29 @@ function App() {
     }
   }
 
-  function logout() {
-    sessionStorage.removeItem("username")
-    sessionStorage.removeItem("email")
-    setUser({ username: "", email: "" })
+  async function logout() {
+    await fetch('http://localhost:3000/logout', {
+        method: 'POST',
+        credentials: 'include'
+    });
+    setUser({});
   }
 
   return (
     <div className="grid grid-cols-[0.35fr_1fr_0.35fr] min-h-screen">
-      <Sidebar 
+      <Sidebar
         loggedInUser={user}
         onLoginClick={openLogin}
         onSignupClick={openSignup}
         onLogoutClick={logout}
+        onUploadResult={setUploadResult}
       />
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/"
+          element={<Dashboard loggedInUser={user} onUserUpload={uploadResult} />} />
         <Route path="/profile" element={<Profile loggedInUser={user} />} />
       </Routes>
-      
+
       <Summarybar />
       {login &&
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col w-140 h-100 bg-(--overlay-bg) rounded-2xl text-center inset-0 bg-black/40 backdrop-blur-sm p-4">
