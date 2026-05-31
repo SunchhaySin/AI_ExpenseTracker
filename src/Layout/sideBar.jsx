@@ -1,8 +1,9 @@
 import React from 'react'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ClipLoader } from 'react-spinners'
 
-export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onLogoutClick, onUploadResult}) {
+export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onLogoutClick, onUploadResult, getAllPayments }) {
     const onLogin = () => {
         onLoginClick()
     }
@@ -19,11 +20,12 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
     }
 
     const navigate = useNavigate()
-    const [uploadedFiles, setUploadedFiles] = useState([]);
+    const [uploadedFiles, setUploadedFiles] = useState([]); // If user not logged In, uploadedFile will disappear on refresh
     const [fileExist, setFileExist] = useState(false)
     const [imageText, setImageText] = useState([]);
     const [imagePreview, setImagePreview] = useState("");
     const fileInputRef = useRef(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         return () => {
@@ -33,6 +35,12 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
         };
     }, [imagePreview]);
 
+    useEffect(() => {
+        if (loggedInUser.userID) {
+            setUploadedFiles(getAllPayments)
+        }
+    }, [getAllPayments])
+
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files)
         const updatedFiles = [...uploadedFiles, ...files];
@@ -41,6 +49,27 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
         setFileExist(true)
         files.forEach((file, i) => handleFile(uploadedFiles.length + i, file));
     };
+
+    const deleteUpload = async (index) => {
+        try {
+            const confirmDelete = confirm("Are you sure you want to remove this expense ?")
+            if (confirmDelete) {
+                const file = uploadedFiles[index];
+                const url = file.type === "transaction"
+                    ? `http://localhost:3000/delete/invoice/${loggedInUser.userID}/${file.uploadID}`
+                    : `http://localhost:3000/delete/receipt/${loggedInUser.userID}/${file.receiptID}`;
+
+                const result = await fetch(url, { method: 'DELETE', credentials: 'include' });
+                if (!result.ok) {
+                    alert("Could not delete this upload");
+                    return;
+                }
+            }
+        } catch (err) {
+            console.error(err.message);
+        }
+    };
+
 
     const triggerFileDialog = () => {
         fileInputRef.current.click();
@@ -70,6 +99,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
 
     const handleFile = useCallback(async (index, fileOverride = null) => {
         setImageText([]);
+        setIsLoading(true)
         try {
             const file = fileOverride ?? uploadedFiles[index];
             const base64File = await convertToBase64(file);
@@ -87,51 +117,53 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
 
             const data = await result.json();
             console.log(data);
-            if (!data.data) {  
+            if (!data.data) {
                 alert("Unstable AI Processing.");
                 return;
             }
             setImageText(data.data)
+            setIsLoading(false);
             console.log(imageText)
 
             const callbackReceiptResult = {
-                "biller" : data.data.biller,
-                "date" : data.data.date,
-                "amount" : data.data.total_amount,
-                "currency" : data.data.currency,
-                "type" : "receipt",
+                "biller": data.data.biller,
+                "date": data.data.date,
+                "amount": data.data.total_amount,
+                "currency": data.data.currency,
+                "type": "receipt",
             }
             const callbackInvoiceResult = {
-                "merchant" : data.data.merchantName,
+                "merchant": data.data.merchantName,
                 "data": data.data.date,
                 "amount": data.data.amount,
                 "currency": data.data.currency,
                 "type": "transaction"
             }
 
-            if(data.data.type == "transaction"){
+            if (data.data.type == "transaction") {
                 onUploadResult(callbackInvoiceResult)
-            } else if (data.data.type == "receipt"){
+            } else if (data.data.type == "receipt") {
                 onUploadResult(callbackReceiptResult)
             } else {
                 return;
             }
 
-            if(loggedInUser.userID) {
+            if (loggedInUser.userID) {
                 if (data.data.type == "transaction") {
                     const uploadResult = await fetch('http://localhost:3000/upload/invoice', {
-                    method: "POST",
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(
-                        { data: 
+                        method: "POST",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(
                             {
-                                ...data.data,
-                                userID: loggedInUser.userID
-                            }
-                        })
+                                data:
+                                {
+                                    ...data.data,
+                                    userID: loggedInUser.userID
+                                }
+                            })
                     })
 
-                    if (!uploadResult.ok) { 
+                    if (!uploadResult.ok) {
                         const err = await uploadResult.json();
                         console.error(err.error);
                     }
@@ -140,19 +172,19 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                 } else if (data.data.type == "receipt") {
                     const uploadResult = await fetch('http://localhost:3000/upload/receipt', {
                         method: "POST",
-                        headers: { 'Content-Type' : 'application/json'},
-                        body: JSON.stringify({...data.data, userID: loggedInUser.userID})
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...data.data, userID: loggedInUser.userID })
                     })
                     const response = await uploadResult.json();
                     console.log("Receipt response:", response);
-                    if(!uploadResult.ok) {
+                    if (!uploadResult.ok) {
                         console.error(response.error);
                     }
                     console.log("Uploaded Receipt", uploadResult)
                 }
             } else {
                 console.log("Not Logged In")
-                return {message : "Couldn't Process Upload Futher"}
+                return { message: "Couldn't Process Upload Futher" }
             }
 
         } catch (error) {
@@ -210,23 +242,30 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                 />
                 <button className="flex justify-center items-center gap-3 mt-3 text-(--text-d) text-lg bg-(--bg2) border border-(--border) p-2 rounded-lg hover:bg-(--text-orange)"
                     onClick={triggerFileDialog}>
-                    <p>Upload</p>
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black"><path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" /></svg>
+                    {isLoading
+                        ? <div className="flex gap-2">
+                            <p>Loading</p>
+                            <div className="spinner-container">
+                                <ClipLoader color="black" size={20} />
+                            </div>
+                        </div>
+                        : <p>Upload</p>
+                    }
+                    {!isLoading && <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black"><path d="M440-320v-326L336-542l-56-58 200-200 200 200-56 58-104-104v326h-80ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" /></svg>}
                 </button>
-                {/* <Text>{result.senderName}</Text>
-                <Text>{result.amount}</Text>
-                <Text>{result.merchantName}</Text> */}
                 {fileExist && <p className="text-(--text) mt-5">Uploaded Files</p>}
                 <ul className="mt-2 overflow-y-auto max-h-[200px]">
                     {uploadedFiles.map((file, index) => (
                         <li key={index}
-                            onClick={() => handleFile(index)}
                             className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 cursor-pointer">
-                            <span className="text-[var(--text)]">{file.name}</span>
+                            <span className="text-[var(--text)]">{file.name || file.merchantName || file.biller}</span>
                             <div className="flex gap-2">
                                 <span onClick={(e) => {
                                     e.stopPropagation();
-                                    removeFile(index)
+                                    if (!loggedInUser.userID) {
+                                        removeFile(index)
+                                    }
+                                    deleteUpload(index)
                                 }}
                                     className="cursor-pointer">
 
@@ -243,10 +282,10 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                                 }}
                                     className="cursor-pointer">
                                     <svg className="fill-[#E3E3E3] hover:fill-blue-500 transition-colors"
-                                        xmlns="http://www.w3.org/2000/svg" 
-                                        height="24px" viewBox="0 -960 960 960" 
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        height="24px" viewBox="0 -960 960 960"
                                         width="24px" fill="#E3E3E3">
-                                            <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
+                                        <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
                                     </svg>
                                 </span>
                             </div>

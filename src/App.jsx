@@ -4,16 +4,19 @@ import Sidebar from './Layout/sideBar'
 import Dashboard from './Layout/dashboard'
 import Summarybar from './Layout/summarybar'
 import Profile from './Layout/profile'
+import { ClipLoader } from 'react-spinners'
 
 function App() {
   const [login, setLogin] = useState(false);
   const [signup, setSignup] = useState(false);
   const [uploadResult, setUploadResult] = useState(null);
   const [user, setUser] = useState({});
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const [allPayments, setAllPayments] = useState([])
+
   useEffect(() => {
     fetch('http://localhost:3000/auth/me', {
-      credentials: 'include'  
+      credentials: 'include'
     })
       .then(res => {
         if (!res.ok) throw new Error("Not logged in");
@@ -69,6 +72,7 @@ function App() {
 
   async function register(e) {
     e.preventDefault();
+    setIsLoading(true)
     try {
       const res = await fetch('http://localhost:3000/reg', {
         method: "POST",
@@ -79,6 +83,7 @@ function App() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error)
       console.log(data)
+      setIsLoading(false)
       alert("Registration Successful")
       setSignupForm({
         email: "",
@@ -89,22 +94,24 @@ function App() {
     } catch (err) {
       console.error(err)
       alert(err.message)
+      setIsLoading(false)
     }
   }
 
   async function userLogin(e) {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const res = await fetch('http://localhost:3000/login', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include', 
+        credentials: 'include',
         body: JSON.stringify(loginForm)
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       console.log(data)
-
+      setIsLoading(false)
       setUser({
         username: data.username,
         email: data.email,
@@ -121,15 +128,19 @@ function App() {
     } catch (err) {
       console.error(err)
       alert(err.message)
+      setIsLoading(false)
     }
   }
 
   async function logout() {
-    await fetch('http://localhost:3000/logout', {
+    const confirmLogout = confirm("Sign out fromt this account ? ")
+    if (confirmLogout) {
+      await fetch('http://localhost:3000/logout', {
         method: 'POST',
         credentials: 'include'
-    });
-    setUser({});
+      });
+      setUser({});
+    }
   }
 
   return (
@@ -140,10 +151,11 @@ function App() {
         onSignupClick={openSignup}
         onLogoutClick={logout}
         onUploadResult={setUploadResult}
+        getAllPayments={allPayments}
       />
       <Routes>
         <Route path="/"
-          element={<Dashboard loggedInUser={user} onUserUpload={uploadResult} />} />
+          element={<Dashboard loggedInUser={user} onUserUpload={uploadResult} exportPayments={setAllPayments}/>} />
         <Route path="/profile" element={<Profile loggedInUser={user} />} />
       </Routes>
 
@@ -178,8 +190,16 @@ function App() {
             <button className="flex gap-2 justify-center items-center bg-(--bg2) p-2 w-80 rounded-lg text-(--text-d) text-lg mt-8 hover:bg-[var(--text-orange)]"
               type="submit"
               form="loginForm">
-              Login
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black"><path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" /></svg>
+              {isLoading
+                ? <div className="flex gap-2">
+                  <p>Loading</p>
+                  <div className="spinner-container">
+                    <ClipLoader color="black" size={20} />
+                  </div>
+                </div>
+                : <p>Login</p>
+              }
+              {!isLoading && <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black"><path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" /></svg>}
             </button>
           </div>
         </div>
@@ -222,8 +242,16 @@ function App() {
             <button className="flex gap-2 justify-center items-center bg-(--bg2) p-2 w-80 rounded-lg text-(--text-d) text-lg mt-8 hover:bg-[var(--text-orange)]"
               type="submit"
               form="registerForm">
-              Register
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black"><path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" /></svg>
+              {isLoading
+                ? <div className="flex gap-2">
+                    <p>Loading</p>
+                    <div className="spinner-container">
+                      <ClipLoader color="black" size={20} />
+                    </div>
+                  </div>
+                : <p>Register</p>
+              }
+              {!isLoading && <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black"><path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" /></svg>}
             </button>
           </div>
         </div>

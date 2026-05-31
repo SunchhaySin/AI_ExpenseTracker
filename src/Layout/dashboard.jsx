@@ -1,16 +1,16 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
 
-export default function Dashboard({ loggedInUser, onUserUpload }) {
+export default function Dashboard({ loggedInUser, onUserUpload, exportPayments}) {
   const [weekly, setWeekly] = useState(false);
   const [monthly, setMonthly] = useState(false);
   const [daily, setDaily] = useState(true);
   const [dropdown, setDropdown] = useState(false);
 
   const [uploads, setUploads] = useState([])
-  const [invoice, setInvoices] = useState([])
+  const [invoices, setInvoices] = useState([])
   const [receipts, setReceipts] = useState([]);
-  const [spendings, setSpendings] = useState("")
+  const [spendings, setSpendings] = useState({})
   const handleSelect = () => {
     setDropdown(!dropdown);
     console.log("Dropdown Clicked")
@@ -42,7 +42,7 @@ export default function Dashboard({ loggedInUser, onUserUpload }) {
     }
   }, [onUserUpload])
 
-  console.log("Result from app.js", uploads)
+  // console.log("Result from app.js", uploads)
 
   useEffect(() => {
     if (!loggedInUser.userID) return;
@@ -63,9 +63,42 @@ export default function Dashboard({ loggedInUser, onUserUpload }) {
       .catch(err => console.error(err));
   }, [loggedInUser.userID])
 
+  useEffect(() => {
+    if(invoices.length > 0 || receipts.length > 0) {
+      setUploads([...invoices, ...receipts])
+    }
+  },[invoices, receipts])
+
+  useEffect(() => {
+    let totalPriceUSD = 0;
+    let totalPriceTHB = 0;
+    uploads.forEach((upload) => {
+      if(upload.currency === "USD") {
+        const price = upload.amount || upload.total_amount
+        const newPrice = parseFloat(price)
+        totalPriceUSD += newPrice
+      }
+      else if (upload.currency === "THB") {
+        const price = upload.amount || upload.total_amount
+        const newPrice = parseFloat(price)
+        totalPriceTHB += newPrice
+      }
+      else {
+        console.log("Unrecognized Currency")
+      }
+    })
+    setSpendings({
+      "USD" : totalPriceUSD.toFixed(2),
+      "THB" : totalPriceTHB.toFixed(2)
+    })
+
+    exportPayments(uploads)
+  }, [uploads])
+
   // console.log({
   //   "receipts": receipts,
-  //   "invoice": invoice
+  //   "invoice": invoices,
+  //   "uploads" : uploads,
   // })
 
   return (
@@ -76,16 +109,28 @@ export default function Dashboard({ loggedInUser, onUserUpload }) {
         <button className="bg-white text-(--text-d) rounded-full p-2">Login</button>
       </header>
       <div className="grid grid-cols-[1fr_1fr] gap-6 text-(--text-l) w-9/11 h-1/3 mt-8">
-        <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3">Upload Details
-          <ul>
+        <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3">
+          <p className="p-2 text-lg w-fit text-(--text-orange) bg-(--bg) rounded-lg">Upload Details</p>
+          <ul className="p-2 text-xs max-h-[200px] overflow-y-auto">
             {uploads.map((upload, index) => (
-              <li key={index}>
-                <p>{upload.amount} {upload.currency}</p>
+              <li key={index} className="grid grid-cols-[1fr_1fr_1fr] bg-(--bg) mt-1 mb-1 p-2">
+                <p>{upload.type}</p>
+                <p>{upload.merchantName || upload.biller}</p>
+                <div>
+                  <p className="text-(--text-green) justify-self-end">{upload.amount || upload.total_amount} {upload.currency}</p>
+                  {/* <p>{upload.date}</p> */}
+                </div>
               </li>
             ))}
           </ul>
         </div>
-        <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3">Total Spendings</div>
+        <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3">
+          <p className="p-2 text-lg w-fit text-(--text-orange) bg-(--bg) rounded-lg">Total Spendings</p>
+          <div className="justify-self-center items-center flex gap-10 mt-5">
+              <p className="bg-(--bg) text-(--text-green)">{spendings.USD} USD</p>
+              <p className="bg-(--bg) text-(--text-green)">{spendings.THB} THB</p>
+          </div>
+        </div>
       </div>
       <div className="flex justify-between w-9/11 h-1/2 bg-(--code-bg) mt-6 rounded-xl border border-(--border) px-6 py-3">
         <p className="text-(--text-orange) text-xl w-fit h-fit p-2.5 bg-(--bg) rounded-full">Expense Analysis</p>
