@@ -21,10 +21,13 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
 
     const navigate = useNavigate()
     const [uploadedFiles, setUploadedFiles] = useState([]); // If user not logged In, uploadedFile will disappear on refresh
+    const [allUploads, setAlluploads] = useState([]) // Tracks all uploaded files, for logged in users
     const [fileExist, setFileExist] = useState(false)
     const [imageText, setImageText] = useState([]);
     const [imagePreview, setImagePreview] = useState("");
     const fileInputRef = useRef(null);
+    const [onDetail, setOnDetail] = useState(false);
+    const [detail, setDetail] = useState({});
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
@@ -37,15 +40,21 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
 
     useEffect(() => {
         if (loggedInUser.userID) {
-            setUploadedFiles(getAllPayments)
+            setAlluploads(getAllPayments)
         }
     }, [getAllPayments])
+
+    useEffect(() => {
+        if(allUploads.length > 0) {
+            setFileExist(true)
+        }
+    }, [uploadedFiles.length])
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files)
         const updatedFiles = [...uploadedFiles, ...files];
-        setUploadedFiles(updatedFiles);
         console.log("Files", updatedFiles)
+        setUploadedFiles(updatedFiles);
         setFileExist(true)
         files.forEach((file, i) => handleFile(uploadedFiles.length + i, file));
     };
@@ -54,7 +63,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
         try {
             const confirmDelete = confirm("Are you sure you want to remove this expense ?")
             if (confirmDelete) {
-                const file = uploadedFiles[index];
+                const file = allUploads[index];
                 const url = file.type === "transaction"
                     ? `http://localhost:3000/delete/invoice/${loggedInUser.userID}/${file.uploadID}`
                     : `http://localhost:3000/delete/receipt/${loggedInUser.userID}/${file.receiptID}`;
@@ -97,6 +106,16 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
 
     }
 
+    const viewDetail = (index) => {
+        setOnDetail(true);
+        setDetail(allUploads[index])
+    }
+
+    const closeDetail = () => {
+        setOnDetail(false);
+        setDetail({})
+    }
+
     const handleFile = useCallback(async (index, fileOverride = null) => {
         setImageText([]);
         setIsLoading(true)
@@ -112,6 +131,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
             const result = await fetch('http://localhost:3000/api/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ images: base64File })
             });
 
@@ -255,17 +275,47 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                 </button>
                 {fileExist && <p className="text-(--text) mt-5">Uploaded Files</p>}
                 <ul className="mt-2 overflow-y-auto max-h-[200px]">
-                    {uploadedFiles.map((file, index) => (
+                    {loggedInUser.userID ?
+                        allUploads.map((file, index) => (
                         <li key={index}
                             className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 cursor-pointer">
-                            <span className="text-[var(--text)]">{file.name || file.merchantName || file.biller}</span>
+                                <span className="text-[var(--text)]">{file.merchantName || file.biller}</span>
                             <div className="flex gap-2">
                                 <span onClick={(e) => {
                                     e.stopPropagation();
-                                    if (!loggedInUser.userID) {
-                                        removeFile(index)
-                                    }
                                     deleteUpload(index)
+                                }}
+                                    className="cursor-pointer">
+
+                                    <svg className="fill-[#E3E3E3] hover:fill-red-500 transition-colors"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        height="24px" viewBox="0 -960 960 960"
+                                        width="24px" fill="#E3E3E3">
+                                        <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+                                    </svg>
+                                </span>
+                                <span onClick={(e) => {
+                                    e.stopPropagation();
+                                    viewDetail(index)
+                                }}
+                                    className="cursor-pointer">
+                                    <svg className="fill-[#E3E3E3] hover:fill-blue-500 transition-colors"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        height="24px" viewBox="0 -960 960 960"
+                                        width="24px" fill="#E3E3E3">
+                                        <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
+                                    </svg>
+                                </span>
+                            </div>
+                        </li>
+                    )): uploadedFiles.map((file, index) => (
+                        <li key={index}
+                            className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 cursor-pointer">
+                                <span className="text-[var(--text)]">{file.name}</span>
+                            <div className="flex gap-2">
+                                <span onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFile(index)
                                 }}
                                     className="cursor-pointer">
 
@@ -299,6 +349,35 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                         alt={"Selected Preview"}
                         className="mt-4 max-h-[300px] rounded object-contain"
                     />
+                )}
+                {onDetail && (
+                    <ul className="m-3 p-5 bg-(--bg) rounded-lg pt-10">
+                        <li className="text-lg font-bold text-(--text) mb-2">Payment Details</li>
+                        <div className="flex gap-3">
+                            <span className="text-(--text) font-bold">Paid To:</span>
+                            <span className="text-(--text-green)">{detail.merchantName || detail.biller}</span>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="text-(--text) font-bold">Payment Type:</span>
+                            <span className="text-(--text-green)">{detail.type}</span>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="text-(--text) font-bold">Total Amount:</span>
+                            <span className="text-(--text-green)">{detail.amount || detail.total_amount} {detail.currency}</span>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="text-(--text) font-bold">Time:</span>
+                            <span className="text-(--text-green)">{detail.time}</span>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="text-(--text) font-bold">Date:</span>
+                            <span className="text-(--text-green)">{detail.date}</span>
+                        </div>
+                        <span className="relative left-55 -top-52"
+                            onClick={closeDetail}>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="orange"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+                        </span>
+                    </ul>
                 )}
             </div>
             <button className="flex justify-center mt-auto bg-(--bg2) p-2 rounded-lg text-lg hover:bg-(--text-orange)" onClick={onSignup}>
