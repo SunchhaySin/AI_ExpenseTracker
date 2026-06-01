@@ -48,8 +48,8 @@ export default function Dashboard({ loggedInUser, onUserUpload, exportPayments})
     if (!loggedInUser.userID) return;
 
     Promise.all([
-      fetch(`http://localhost:3000/fetch/invoice/${loggedInUser.userID}`, { credentials: 'include' }),
-      fetch(`http://localhost:3000/fetch/receipt/${loggedInUser.userID}`, { credentials: 'include' })
+      fetch(`https://expensetrackerserver-agte.onrender.com/fetch/invoice/${loggedInUser.userID}`, { credentials: 'include' }),
+      fetch(`https://expensetrackerserver-agte.onrender.com/fetch/receipt/${loggedInUser.userID}`, { credentials: 'include' })
     ])
       .then(([invoiceRes, receiptRes]) => {
         if (!invoiceRes.ok) throw new Error("Failed to fetch invoices");

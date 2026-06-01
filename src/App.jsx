@@ -15,7 +15,7 @@ function App() {
   const [allPayments, setAllPayments] = useState([])
 
   useEffect(() => {
-    fetch('http://localhost:3000/auth/me', {
+    fetch('https://expensetrackerserver-agte.onrender.com/auth/me', {
       credentials: 'include'
     })
       .then(res => {
@@ -74,7 +74,7 @@ function App() {
     e.preventDefault();
     setIsLoading(true)
     try {
-      const res = await fetch('http://localhost:3000/reg', {
+      const res = await fetch('https://expensetrackerserver-agte.onrender.com/reg', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -102,7 +102,7 @@ function App() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/login', {
+      const res = await fetch('https://expensetrackerserver-agte.onrender.com/login', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',
@@ -135,7 +135,7 @@ function App() {
   async function logout() {
     const confirmLogout = confirm("Sign out fromt this account ? ")
     if (confirmLogout) {
-      await fetch('http://localhost:3000/logout', {
+      await fetch('https://expensetrackerserver-agte.onrender.com/logout', {
         method: 'POST',
         credentials: 'include'
       });

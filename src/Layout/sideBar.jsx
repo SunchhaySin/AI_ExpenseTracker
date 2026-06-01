@@ -65,8 +65,8 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
             if (confirmDelete) {
                 const file = allUploads[index];
                 const url = file.type === "transaction"
-                    ? `http://localhost:3000/delete/invoice/${loggedInUser.userID}/${file.uploadID}`
-                    : `http://localhost:3000/delete/receipt/${loggedInUser.userID}/${file.receiptID}`;
+                    ? `https://expensetrackerserver-agte.onrender.com/delete/invoice/${loggedInUser.userID}/${file.uploadID}`
+                    : `https://expensetrackerserver-agte.onrender.com/delete/receipt/${loggedInUser.userID}/${file.receiptID}`;
 
                 const result = await fetch(url, { method: 'DELETE', credentials: 'include' });
                 if (!result.ok) {
@@ -128,7 +128,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                 return;
             }
 
-            const result = await fetch('http://localhost:3000/api/scan', {
+            const result = await fetch('https://expensetrackerserver-agte.onrender.com/api/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -170,7 +170,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
 
             if (loggedInUser.userID) {
                 if (data.data.type == "transaction") {
-                    const uploadResult = await fetch('http://localhost:3000/upload/invoice', {
+                    const uploadResult = await fetch('https://expensetrackerserver-agte.onrender.com/upload/invoice', {
                         method: "POST",
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(
