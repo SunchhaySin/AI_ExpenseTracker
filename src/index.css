@@ -5,6 +5,7 @@
   --text-h: #08060d;
   --text-green: #00A392;
   --sub-text-green: #006B5F;
+  --text-light-orange: #FFB783;
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
@@ -43,6 +44,7 @@
     --text-orange: #F9913A;
     --text-green: #00A392;
     --sub-text-green: #006B5F;
+    --text-light-orange: #FFB783;
     --bg: #1B1B23;
     --border: #46464F;
     --bg2: #B95F00;
@@ -59,6 +61,129 @@
 
 body {
   margin: 0;
-  /* overflow:hidden */
+}
+/* SideBar and Summary button control*/
+.sideBarOff{
+  display: none;
+}
+.summaryBarOff{
+  display: none;
+}
+.sideBarActive{
+  display: block;
+  svg{
+    fill: var(--text-green)
+  }
+}
+.summaryBarActive{
+  display: block;
+  svg{
+    fill: var(--text-green)
+  }
+}
+.date_mid{
+  display: none; /* the date in the middle column of the uploads detail container*/
+}
+/* Responsive Layout*/
+
+@media(max-width: 1360px) {
+  .text{
+    font-size: 14px;
+  }
+  .textTitle {
+    font-size: 20px;
+  }
+  .topTwoContainer, .bottomContainer{
+    width:90%;
+  }
+  .layout{
+    grid-template-columns: 0.45fr 1fr 0.45fr;
+  }
+
 }
 
+@media(max-width: 1150px) {
+  .topTwoContainer{
+    display: flex;
+    flex-direction: column;
+  }
+  .spending{
+    display: flex;
+  }
+  .uploads_grid{
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .date_mid {
+    display: block;
+  }
+  .date_end{
+    display: none;
+  }
+  .clock{
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .text {
+    font-size: 12px;
+  }
+  .textTitle {
+    font-size: 16px;
+    padding: 3px 0 3px 0;
+  }
+  .sideContainer{
+    gap:8px
+  }
+  /* .spending_text{
+    font-size: 16px;
+  } */
+}
+
+@media (max-width: 1020px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .sideBar{
+    display: none;
+  }
+  .summaryBar{
+    display: none;
+  }
+}
+
+@media(max-width: 450px) {
+  .sideBar_btn{
+    display: flex;
+  }
+}
+
+.sideBarOpen{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100vh;
+  z-index: 100;
+}
+
+.closeSidebarBtn{
+  display:none;
+}
+.sideBarbtn{
+  display: block;
+}
+
+.summaryBarOpen{
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100vh;
+  z-index: 100;
+}
+.sumBarbtn{
+  display: block;
+}
+.closeSumbarBtn{
+  display: none;
+}

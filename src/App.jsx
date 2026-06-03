@@ -143,23 +143,36 @@ function App() {
     }
   }
 
+  const [sideBar, setSideBar] = useState(false)
+  const [sumBar, setSumBar] = useState(false)
   return (
-    <div className="grid grid-cols-[0.35fr_1fr_0.35fr] min-h-screen">
-      <Sidebar
-        loggedInUser={user}
-        onLoginClick={openLogin}
-        onSignupClick={openSignup}
-        onLogoutClick={logout}
-        onUploadResult={setUploadResult}
-        getAllPayments={allPayments}
-      />
+    <div className="layout grid grid-cols-[0.35fr_1fr_0.35fr] h-screen">
+      <div className={sideBar ? "sideBarOpen" : "sideBar"}>
+        <Sidebar
+          loggedInUser={user}
+          onLoginClick={openLogin}
+          onSignupClick={openSignup}
+          onLogoutClick={logout}
+          onUploadResult={setUploadResult}
+          getAllPayments={allPayments}
+          onClose={() => setSideBar(false)}
+        />
+      </div>
       <Routes>
         <Route path="/"
-          element={<Dashboard loggedInUser={user} onUserUpload={uploadResult} exportPayments={setAllPayments}/>} />
+          element={<Dashboard
+            loggedInUser={user}
+            onUserUpload={uploadResult}
+            exportPayments={setAllPayments}
+            openSideBar={() => setSideBar(true)}
+            openSumBar={() => setSumBar(true)}
+          />} />
         <Route path="/profile" element={<Profile loggedInUser={user} />} />
       </Routes>
 
-      <Summarybar />
+      <div className={sumBar ? "summaryBarOpen" : "summaryBar"}>
+        <Summarybar onClose={() => setSumBar(false)}/>
+      </div>
       {login &&
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col w-140 h-100 bg-(--overlay-bg) rounded-2xl text-center inset-0 bg-black/40 backdrop-blur-sm p-4">
           <div className="flex justify-center items-center">
@@ -187,7 +200,7 @@ function App() {
                 onChange={onLoginChange}
               />
             </form>
-            <button className="flex gap-2 justify-center items-center bg-(--bg2) p-2 w-80 rounded-lg text-(--text-d) text-lg mt-8 hover:bg-[var(--text-orange)]"
+            <button className="flex gap-2 justify-center items-center bg-(--bg2) p-2 w-80 rounded-lg text-(--text-d) text-lg mt-8 hover:bg-(--text-orange)"
               type="submit"
               form="loginForm">
               {isLoading
@@ -239,16 +252,16 @@ function App() {
                 onChange={onSignupChange}
               />
             </form>
-            <button className="flex gap-2 justify-center items-center bg-(--bg2) p-2 w-80 rounded-lg text-(--text-d) text-lg mt-8 hover:bg-[var(--text-orange)]"
+            <button className="flex gap-2 justify-center items-center bg-(--bg2) p-2 w-80 rounded-lg text-(--text-d) text-lg mt-8 hover:bg-(--text-orange)"
               type="submit"
               form="registerForm">
               {isLoading
                 ? <div className="flex gap-2">
-                    <p>Loading</p>
-                    <div className="spinner-container">
-                      <ClipLoader color="black" size={20} />
-                    </div>
+                  <p>Loading</p>
+                  <div className="spinner-container">
+                    <ClipLoader color="black" size={20} />
                   </div>
+                </div>
                 : <p>Register</p>
               }
               {!isLoading && <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="black"><path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z" /></svg>}

@@ -3,7 +3,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
 
-export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onLogoutClick, onUploadResult, getAllPayments }) {
+export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onLogoutClick, onUploadResult, getAllPayments, onClose }) {
     const onLogin = () => {
         onLoginClick()
     }
@@ -45,7 +45,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
     }, [getAllPayments])
 
     useEffect(() => {
-        if(allUploads.length > 0) {
+        if (allUploads.length > 0) {
             setFileExist(true)
         }
     }, [uploadedFiles.length])
@@ -227,29 +227,49 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
             };
         });
     }
+    const [closeBtn, setCloseBtn] = useState(false)
+    useEffect(() => {
+        const handleCloseBtn = () => {
+            if (window.innerWidth <= 1020) {
+                setCloseBtn(true)
+            }
+            else {
+                setCloseBtn(false)
+            }
+        }
+        handleCloseBtn()
+        window.addEventListener("resize", handleCloseBtn);
 
+        return () => {
+            window.removeEventListener("resize", handleCloseBtn);
+        };
+    }, [])
     return (
-        <div className="flex flex-col bg-(--code-bg) p-4">
-            <div className="flex items-center gap-4">
+        <div className="flex flex-col bg-(--code-bg) p-4 h-full">
+            <div className="sideContainer flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full border border-(--border) bg-(--bg2) content-center justify-items-center">
                     <img src="src/assets/noProfile.png" className="h-10" onClick={goToProfile} />
                 </div>
                 <div className="flex justify-between flex-1 border border-(--border) bg-(--bg) rounded-full p-1">
-                    <p className="text-(--text-orange) text-l p-2">
+                    <p className="text text-(--text-orange) p-2">
                         {loggedInUser.username ? `${loggedInUser.username}` : "Not Logged In"}
                     </p>
                     {!loggedInUser.username && (
-                        <button className="bg-(--bg2) text-(--text-l) rounded-full p-2 hover:bg-(--text-orange)" onClick={onLogin}>
+                        <button className="text bg-(--bg2) text-(--text-l) rounded-full p-2 hover:bg-(--text-orange)" onClick={onLogin}>
                             Login
                         </button>
                     )}
 
                     {loggedInUser.username && (
-                        <button className="bg-(--bg2) text-(--text-l) rounded-full p-2 hover:bg-(--text-orange)" onClick={onLogout}>
+                        <button className="text bg-(--bg2) text-(--text-l) rounded-full p-2 hover:bg-(--text-orange)" onClick={onLogout}>
                             Logout
                         </button>
                     )}
+
                 </div>
+                <span className={closeBtn ? "sideBarbtn" : "closeSidebarBtn"} onClick={onClose}>
+                    <svg className="m-0 p-0" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#E3E3E3"><path d="M360-120v-720h80v720h-80Zm160-160v-400l200 200-200 200Z" /></svg>
+                </span>
             </div>
             <div className="flex flex-col  mt-8">
                 <p className="text-(--text)">Upload Invoice Receipts</p>
@@ -277,70 +297,70 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                 <ul className="mt-2 overflow-y-auto max-h-[200px]">
                     {loggedInUser.userID ?
                         allUploads.map((file, index) => (
-                        <li key={index}
-                            className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 cursor-pointer">
-                                <span className="text-[var(--text)]">{file.merchantName || file.biller}</span>
-                            <div className="flex gap-2">
-                                <span onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteUpload(index)
-                                }}
-                                    className="cursor-pointer">
+                            <li key={index}
+                                className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 cursor-pointer">
+                                <span className="text-(--text) text-sm">{file.merchantName || file.biller}</span>
+                                <div className="flex gap-2">
+                                    <span onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteUpload(index)
+                                    }}
+                                        className="cursor-pointer">
 
-                                    <svg className="fill-[#E3E3E3] hover:fill-red-500 transition-colors"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        height="24px" viewBox="0 -960 960 960"
-                                        width="24px" fill="#E3E3E3">
-                                        <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
-                                    </svg>
-                                </span>
-                                <span onClick={(e) => {
-                                    e.stopPropagation();
-                                    viewDetail(index)
-                                }}
-                                    className="cursor-pointer">
-                                    <svg className="fill-[#E3E3E3] hover:fill-blue-500 transition-colors"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        height="24px" viewBox="0 -960 960 960"
-                                        width="24px" fill="#E3E3E3">
-                                        <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
-                                    </svg>
-                                </span>
-                            </div>
-                        </li>
-                    )): uploadedFiles.map((file, index) => (
-                        <li key={index}
-                            className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 cursor-pointer">
-                                <span className="text-[var(--text)]">{file.name}</span>
-                            <div className="flex gap-2">
-                                <span onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeFile(index)
-                                }}
-                                    className="cursor-pointer">
+                                        <svg className="fill-[#E3E3E3] hover:fill-red-500 transition-colors"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            height="24px" viewBox="0 -960 960 960"
+                                            width="24px" fill="#E3E3E3">
+                                            <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+                                        </svg>
+                                    </span>
+                                    <span onClick={(e) => {
+                                        e.stopPropagation();
+                                        viewDetail(index)
+                                    }}
+                                        className="cursor-pointer">
+                                        <svg className="fill-[#E3E3E3] hover:fill-blue-500 transition-colors"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            height="24px" viewBox="0 -960 960 960"
+                                            width="24px" fill="#E3E3E3">
+                                            <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
+                                        </svg>
+                                    </span>
+                                </div>
+                            </li>
+                        )) : uploadedFiles.map((file, index) => (
+                            <li key={index}
+                                className="flex justify-between items-center bg-(--bg) p-2 rounded mt-2 cursor-pointer">
+                                <span className="text-(--text)">{file.name}</span>
+                                <div className="flex gap-2">
+                                    <span onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeFile(index)
+                                    }}
+                                        className="cursor-pointer">
 
-                                    <svg className="fill-[#E3E3E3] hover:fill-red-500 transition-colors"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        height="24px" viewBox="0 -960 960 960"
-                                        width="24px" fill="#E3E3E3">
-                                        <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
-                                    </svg>
-                                </span>
-                                <span onClick={(e) => {
-                                    e.stopPropagation();
-                                    previewImg(index)
-                                }}
-                                    className="cursor-pointer">
-                                    <svg className="fill-[#E3E3E3] hover:fill-blue-500 transition-colors"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        height="24px" viewBox="0 -960 960 960"
-                                        width="24px" fill="#E3E3E3">
-                                        <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
-                                    </svg>
-                                </span>
-                            </div>
-                        </li>
-                    ))}
+                                        <svg className="fill-[#E3E3E3] hover:fill-red-500 transition-colors"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            height="24px" viewBox="0 -960 960 960"
+                                            width="24px" fill="#E3E3E3">
+                                            <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+                                        </svg>
+                                    </span>
+                                    <span onClick={(e) => {
+                                        e.stopPropagation();
+                                        previewImg(index)
+                                    }}
+                                        className="cursor-pointer">
+                                        <svg className="fill-[#E3E3E3] hover:fill-blue-500 transition-colors"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            height="24px" viewBox="0 -960 960 960"
+                                            width="24px" fill="#E3E3E3">
+                                            <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
+                                        </svg>
+                                    </span>
+                                </div>
+                            </li>
+                        ))}
                 </ul>
                 {imagePreview && (
                     <img
@@ -375,7 +395,7 @@ export default function Sidebar({ loggedInUser, onLoginClick, onSignupClick, onL
                         </div>
                         <span className="relative left-55 -top-52"
                             onClick={closeDetail}>
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="orange"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="orange"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" /></svg>
                         </span>
                     </ul>
                 )}
