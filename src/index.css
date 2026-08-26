@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --text: #6b6375;
+  --text: #000000;
   --text-h: #08060d;
   --text-green: #00A392;
   --sub-text-green: #006B5F;
@@ -21,24 +21,15 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  /* font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale; */
-
-  @media (max-width: 1024px) {
+  background-color: #e0dfdf;
+  /* @media (max-width: 1024px) {
     font-size: 16px;
-  }
+  } */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
+
+[data-theme="dark"] {
+    --text: #ffffff;
     --text-l: #f3f4f6;
     --text-d: #000000;
     --text-orange: #F9913A;
@@ -56,8 +47,10 @@
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    
+    background-color: #0f0f0f;
   }
-}
+
 
 body {
   margin: 0;
