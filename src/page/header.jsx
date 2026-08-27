@@ -78,7 +78,7 @@ export default function Header() {
                 )}
                 <header className="flex items-center justify-center bg-(--bg2) px-2 py-1 rounded-full">
                     <div
-                        className={`${windowWidth > 1275 ? "text-2xl" : windowWidth > 800 ? "text-xl" : "text-lg"} text-(--text) font-bold`}
+                        className={`${windowWidth > 1275 ? "text-2xl" : windowWidth > 800 ? "text-xl" : "text-lg"} text-black font-bold`}
                     >
                         EXP.Cacl
                     </div>

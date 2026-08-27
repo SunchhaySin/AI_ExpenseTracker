@@ -1,25 +1,36 @@
-import React from 'react'
-import { useState, useEffect, useMemo } from 'react'
-import { ClipLoader } from 'react-spinners'
-import UseAppContext from '../../context'
-import SpendingAreaChart from '../widgets/charts/spendingAreaChart'
-import SpendingPieChart from '../widgets/charts/spendingPieChart'
-import Sidebar from '../sideBar'
+import React from "react";
+import { useState, useEffect, useMemo } from "react";
+import { ClipLoader } from "react-spinners";
+import UseAppContext from "../../context";
+import SpendingAreaChart from "../widgets/charts/spendingAreaChart";
+import SpendingPieChart from "../widgets/charts/spendingPieChart";
+import UseFileUpload from "../../../hooks/useFileUpload";
+import UploadsTable from "../widgets/UploadsTable";
 
 export default function Dashboard() {
-  // const [uploads, setUploads] = useState([])
-  // const [invoices, setInvoices] = useState([])
-  // const [receipts, setReceipts] = useState([]);
-  // const [spendings, setSpendings] = useState({});
-
   const {
     loggedInUser,
     windowWidth,
     allPaymentSlips,
     uploadedSlips,
-    isLoading
+    isLoading,
   } = UseAppContext();
-  console.log(allPaymentSlips)
+
+  const {
+    fileInputRef,
+    handleFileUpload,
+    isLoading: isUploadLoading, // alliasing isLoading from the UseFileUpload Hook
+  } = UseFileUpload();
+
+  const [viewedImage, setViewedImage] = useState(null);
+
+  const handleViewImage = (item) => {
+    setViewedImage(item);
+  };
+
+  const closeImageView = () => {
+    setViewedImage(null);
+  };
 
   // DATE/TIME Helper Functions
   function startOfMonth(date) {
@@ -31,13 +42,16 @@ export default function Dashboard() {
   }
 
   function monthLabel(date) {
-    return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    return date.toLocaleDateString(undefined, {
+      month: "long",
+      year: "numeric",
+    });
   }
 
-  const paymentData = loggedInUser ? allPaymentSlips ?? [] : [];
+  const paymentData = loggedInUser ? (allPaymentSlips ?? []) : [];
 
   const parsedPayments = useMemo(() => {
-    return paymentData
+    return (loggedInUser ? paymentData : uploadedSlips)
       .map((item) => {
         const rawDate = item.transaction_date || item.date || item.createdAt;
         const parsedDate = new Date(rawDate);
@@ -50,17 +64,16 @@ export default function Dashboard() {
           date: parsedDate,
           amount: amountValue,
           currency: item.currency || "Unknown",
-          seriesKey: item.type === "receipt" ? "receipt" : "transaction",
         };
       })
       .filter(Boolean);
-  }, [paymentData]);
+  }, [paymentData, uploadedSlips, loggedInUser]);
 
   const earliestMonth = useMemo(() => {
     if (parsedPayments.length === 0) return startOfMonth(new Date());
     const earliest = parsedPayments.reduce(
       (min, p) => (p.date < min ? p.date : min),
-      parsedPayments[0].date
+      parsedPayments[0].date,
     );
     return startOfMonth(earliest);
   }, [parsedPayments]);
@@ -73,30 +86,43 @@ export default function Dashboard() {
 
   const goPrevMonth = () => {
     if (!canGoPrev) return;
-    setViewedMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    setViewedMonth(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1),
+    );
   };
 
   const goNextMonth = () => {
     if (!canGoNext) return;
-    setViewedMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    setViewedMonth(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1),
+    );
   };
 
   const chartData = useMemo(() => {
     const daysInMonth = new Date(
       viewedMonth.getFullYear(),
       viewedMonth.getMonth() + 1,
-      0
+      0,
     ).getDate();
 
+    const currenciesThisMonth = new Set();
+      parsedPayments.forEach((p) => {
+        if (isSameMonth(p.date, viewedMonth)) currenciesThisMonth.add(p.currency);
+    });
+
     const dayBuckets = Array.from({ length: daysInMonth }, (_, i) => {
-      const dayDate = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), i + 1);
-      return {
+      const dayDate = new Date(
+        viewedMonth.getFullYear(),
+        viewedMonth.getMonth(),
+        i + 1,
+      );
+       const bucket = {
         day: dayDate.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-        transaction: 0,
-        receipt: 0,
-        transactionByCurrency: {},
-        receiptByCurrency: {},
       };
+      currenciesThisMonth.forEach((currency) => {
+        bucket[currency] = 0;
+      });
+      return bucket
     });
 
     parsedPayments.forEach((p) => {
@@ -105,57 +131,66 @@ export default function Dashboard() {
       const bucket = dayBuckets[dayIndex];
       if (!bucket) return;
 
-      bucket[p.seriesKey] += p.amount;
-
-      const byCurrencyKey = `${p.seriesKey}ByCurrency`;
-      bucket[byCurrencyKey][p.currency] = (bucket[byCurrencyKey][p.currency] || 0) + p.amount;
+      bucket[p.currency] = (bucket[p.currency] || 0) + p.amount;
     });
 
     return dayBuckets;
   }, [parsedPayments, viewedMonth]);
 
-  // useEffect(() => {
-  //   let totalPriceUSD = 0;
-  //   let totalPriceTHB = 0;
-  //   let paymentSlipList;
+  function DownloadImageFromUrl(dataUrl, filename = "upload.jpg") {
+    const [header, base64Data] = dataUrl.split(",");
+    const mimeMatch = header.match(/data:(.*?);base64/);
+    const mimeType = mimeMatch ? mimeMatch[1] : "application/octet-stream";
 
-  //   loggedInUser
-  //     ? paymentSlipList = allPaymentSlips
-  //     : paymentSlipList = uploadedSlips
+    const byteString = atob(base64Data);
+    const byteArray = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+      byteArray[i] = byteString.charCodeAt(i);
+    }
 
-  //   paymentSlipList.forEach((upload) => {
-  //     if (upload.currency === "USD") {
-  //       const price = upload.amount || upload.total_amount
-  //       const newPrice = parseFloat(price)
-  //       totalPriceUSD += newPrice
-  //     }
-  //     else if (upload.currency === "THB") {
-  //       const price = upload.amount || upload.total_amount
-  //       const newPrice = parseFloat(price)
-  //       totalPriceTHB += newPrice
-  //     }
-  //     else {
-  //       console.log("Unrecognized Currency")
-  //     }
-  //   })
-  //   setSpendings({
-  //     "USD": totalPriceUSD.toFixed(2),
-  //     "THB": totalPriceTHB.toFixed(2)
-  //   })
+    const blob = new Blob([byteArray], { type: mimeType });
+    const url = URL.createObjectURL(blob);
 
-  // }, [loggedInUser, allPaymentSlips, uploadedSlips])
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <div className="bg-(--bg) w-full rounded-3xl overflow-y-auto py-4 px-6">
       <div className="flex flex-col min-h-0 h-full text-(--text-l) gap-2">
-        <div className={`flex items-center justify-between border border-(--border)/40 rounded-lg 
-              ${windowWidth > 600 ? "p-2" : "p-1"}`}>
+        {windowWidth <= 1275 && (
+          <UploadsTable
+            windowWidth={windowWidth}
+            loggedInUser={loggedInUser}
+            paymentData={paymentData}
+            uploadedSlips={uploadedSlips}
+            isLoading={isLoading}
+            isUploadLoading={isUploadLoading}
+            fileInputRef={fileInputRef}
+            handleFileUpload={handleFileUpload}
+            onViewImage={handleViewImage}
+          />
+        )}
+
+        <div
+          className={`flex items-center justify-between border border-(--border)/40 rounded-lg 
+              ${windowWidth > 600 ? "p-2" : "p-1"}`}
+        >
           <button
             onClick={goPrevMonth}
             disabled={!canGoPrev}
             className="text-(--text) disabled:opacity-30 disabled:cursor-not-allowed hover:text-(--text-orange) transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="20px"
+              viewBox="0 -960 960 960"
+              width="20px"
+              fill="currentColor"
+            >
               <path d="M560-240 320-480l240-240 56 56-184 184 184 184-56 56Z" />
             </svg>
           </button>
@@ -169,91 +204,107 @@ export default function Dashboard() {
             disabled={!canGoNext}
             className="text-(--text) disabled:opacity-30 disabled:cursor-not-allowed hover:text-(--text-orange) transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="20px"
+              viewBox="0 -960 960 960"
+              width="20px"
+              fill="currentColor"
+            >
               <path d="m376-240-56-56 184-184-184-184 56-56 240 240-240 240Z" />
             </svg>
           </button>
         </div>
-        <div className={`${windowWidth > 1275 ? "grid grid-cols-2" : "flex flex-wrap"}  gap-4 shrink-0`}>
-          <div className={`bg-(--code-bg) border border-(--border) rounded-lg p-3 h-90 w-full`}>
+        <div
+          className={`${windowWidth > 1275 ? "grid grid-cols-2" : "flex flex-wrap"}  gap-4 shrink-0`}
+        >
+          <div
+            className={`bg-(--code-bg) border border-(--border) rounded-lg p-3 h-90 w-full`}
+          >
             <SpendingAreaChart chartData={chartData} />
           </div>
-          <div className={`bg-(--code-bg) border border-(--border) rounded-lg p-3 h-90 w-full`}>
-            <SpendingPieChart chartData={chartData} currentViewedMonth={monthLabel(viewedMonth)} />
+          <div
+            className={`bg-(--code-bg) border border-(--border) rounded-lg p-3 h-90 w-full`}
+          >
+            <SpendingPieChart
+              chartData={chartData}
+              currentViewedMonth={monthLabel(viewedMonth)}
+            />
           </div>
-          {windowWidth <= 750 && (
-            <Sidebar />
-          )}
         </div>
 
-        <div className="bg-(--code-bg) border border-(--border) rounded-lg p-3 flex-1 min-h-60 flex flex-col overflow-hidden">
-          <p className="py-1 px-2 my-2 text-lg w-fit text-(--text-orange) border border-(--border)/60 bg-(--code-bg) rounded-lg shrink-0">Payment Preview</p>
-          <ul className="p-2 text-xs h-full min-h-0 flex flex-col">
-            {(loggedInUser ? paymentData : uploadedSlips).length === 0 ? (
-              <p className="text-(--text)/80 w-fit font-semibold bg-(--bg) border border-(--border) rounded-md p-1">Empty Payments List</p>
-            ) : windowWidth > 750 ? (
-              <li className="grid grid-cols-3 p-2 bg-(--bg) text-[13px] text-(--text-orange)/90 font-bold shrink-0">
-                <p className="justify-self-start">Merchant/Biller</p>
-                <p className="justify-self-center">{windowWidth > 900 ? "Date of Transaction" : "Date/Time"}</p>
-                <p className="justify-self-end">{windowWidth > 900 ? "Transaction Amount" : "Amount"}</p>
-              </li>
-            ) : windowWidth > 550 && (
-              <li className="flex items-center justify-between p-2 bg-(--bg) text-[13px] text-(--text-orange)/90 font-bold shrink-0">
-                <p className="justify-self-start">Merchant/Biller</p>
-                <p className="justify-self-end">Amount</p>
-              </li>
-            )}
-
-            {isLoading ?
-              (<div className="flex-1 w-full flex justify-center items-center text-(--text-orange)/80">
-                <span className="flex gap-2 items-center">
-                  <p>Loading...</p>
-                  <ClipLoader color="currentColor" size={20} />
-                </span>
-              </div>
-              ) : (
-                <div className="flex-1 min-h-0 overflow-y-auto">
-                  {(loggedInUser ? paymentData : uploadedSlips).map((data, index) => {
-                    const merchantName = data.merchantName || data.paidTo || data.name || "N/A";
-
-                    // Handle date format safely for both object types
-                    const rawDate = data.transaction_date || data.date || "";
-                    const formattedDate = rawDate.includes("T")
-                      ? rawDate.split("T")[0]
-                      : rawDate;
-
-                    // Combine date and time if available (fallback to date only)
-                    const displayDate = data.time ? `${formattedDate} ${data.time}` : formattedDate;
-
-                    // Safe amount extraction
-                    const displayAmount = data.amount ?? data.total_amount ?? "0";
-
-                    return windowWidth > 750 ? (
-                      <li key={index} className="grid grid-cols-3 min-w-0 bg-(--bg) mt-1 mb-1 p-2">
-                        <p className="justify-self-start">{merchantName}</p>
-                        <p className="text-(--text-light-orange) justify-self-center">{displayDate}</p>
-                        <p className="text-(--text-green) text-[13px] font-semibold justify-self-end">
-                          {displayAmount} {data.currency}
-                        </p>
-                      </li>
-                    ) : (
-                      <li key={index} className="w-full flex items-center justify-between min-w-0 bg-(--bg) mt-1 mb-1 p-2">
-                        <p className="font-semibold">{merchantName}</p>
-                        <div className="flex flex-col items-end">
-                          <p className="text-(--text-light-orange) text-[11px]">{displayDate}</p>
-                          <p className="text-(--text-green) font-semibold text-[13px]">
-                            {displayAmount} {data.currency}
-                          </p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </div>
-              )
-            }
-          </ul>
-        </div>
+        {windowWidth > 1275 && (
+          <UploadsTable
+            windowWidth={windowWidth}
+            loggedInUser={loggedInUser}
+            paymentData={paymentData}
+            uploadedSlips={uploadedSlips}
+            isLoading={isLoading}
+            isUploadLoading={isUploadLoading}
+            fileInputRef={fileInputRef}
+            handleFileUpload={handleFileUpload}
+            onViewImage={handleViewImage}
+          />
+        )}
       </div>
+      {viewedImage && (
+        <div
+          className={`fixed inset-0 bg-black/60 flex items-center justify-center z-50 h-full w-full ${windowWidth < 500 && "px-4"}`}
+          onClick={closeImageView}
+        >
+          <div
+            className="bg-(--bg) rounded-xl p-4 max-w-lg w-fit"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex flex-col items-start">
+                <p className="text-(--text-orange) font-semibold">
+                  {viewedImage.merchantName ||
+                    viewedImage.paidTo ||
+                    viewedImage.name ||
+                    "Upload"}
+                </p>
+                <p className="text-(--text-orange)/80 text-sm">
+                  {viewedImage.transaction_date.split("T")[0]}
+                </p>
+              </div>
+              <div className="flex items-center gap-5">
+                <button 
+                  onClick={() => {
+                    const today = new Date().toISOString().split("T")[0];
+                    DownloadImageFromUrl(viewedImage?.image?.image, `receipt-${viewedImage.id}-${today}.jpg`)
+                  }}
+                  className={`flex items-center gap-2 border border-(--bg2)/60 rounded-lg ${windowWidth > 750 ? "text-sm" : "text-xs"} bg-(--bg2) text-black px-1 py-0.5`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    height={windowWidth > 750 ? "22px" : "18px"}
+                    viewBox="0 -960 960 960"
+                    width={windowWidth > 750 ? "22px" : "18px"}
+                    fill="currentColor"
+                  >
+                    <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+                  </svg>
+                  <p>Download Image</p>
+                </button>
+                <button onClick={closeImageView} className="text-(--text)">
+                  ✕
+                </button>
+              </div>
+            </div>
+            {viewedImage.image?.image ? (
+              <img
+                src={viewedImage.image.image}
+                alt="Upload"
+                className={`${windowWidth > 1275 ? "max-h-180" : windowWidth > 1000 ? "max-h-160" : windowWidth > 750 ? "max-h-140" : "max-h-120"} w-full object-contain rounded-lg`}
+              />
+            ) : (
+              <p className="text-(--text)/70 text-sm">
+                No image available for this upload.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }

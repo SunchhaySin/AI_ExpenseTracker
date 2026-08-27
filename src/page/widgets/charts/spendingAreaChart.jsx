@@ -9,12 +9,23 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const SERIES_CONFIG = {
-  transaction: { label: "Transactions", color: "#3b82f6" },
-  receipt: { label: "Receipts", color: "#34d399" },
-};
+import { useMemo } from "react";
 
-const SERIES_KEYS = Object.keys(SERIES_CONFIG);
+
+const COLOR_PALETTE = [
+  "#3b82f6", // blue
+  "#34d399", // green
+  "#f59e0b", // amber
+  "#ef4444", // red
+  "#a78bfa", // violet
+  "#22d3ee", // cyan
+  "#f472b6", // pink
+];
+
+function getColorForKey(key, allKeys) {
+  const index = allKeys.indexOf(key);
+  return COLOR_PALETTE[index % COLOR_PALETTE.length];
+}
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload || payload.length === 0) return null;
@@ -32,39 +43,42 @@ function CustomTooltip({ active, payload, label }) {
     >
       <p className="font-semibold mb-1">{label}</p>
       {payload.map((entry) => {
-        const byCurrency = entry.payload[`${entry.dataKey}ByCurrency`] || {};
-        const currencies = Object.entries(byCurrency).filter(([, amt]) => amt > 0);
-
-        if (currencies.length === 0) return null;
-
+        if (typeof entry.value !== "number") return null;
         return (
-          <div key={entry.dataKey} className="mb-1 last:mb-0">
-            <p style={{ color: entry.color }} className="font-medium">
-              {SERIES_CONFIG[entry.dataKey].label}
-            </p>
-            {currencies.map(([currency, amt]) => (
-              <p key={currency} className="pl-2 text-(--text)/80">
-                {currency}: {amt.toFixed(2)}
-              </p>
-            ))}
-          </div>
+          <p key={entry.dataKey} style={{ color: entry.color }} className="font-medium">
+            {entry.name}: {entry.value.toFixed(2)}
+          </p>
         );
       })}
     </div>
   );
 }
 
-export default function SpendingAreaChart({chartData}) {
+export default function SpendingAreaChart({ chartData }) {
+  const seriesKeys = useMemo(() => {
+    if (!chartData || chartData.length === 0) return [];
+
+    const keySet = new Set();
+    chartData.forEach((bucket) => {
+      Object.keys(bucket).forEach((key) => {
+        if (key === "day") return;
+        keySet.add(key);
+      });
+    });
+
+    return Array.from(keySet).sort();
+  }, [chartData]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 min-h-[200px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
-              {SERIES_KEYS.map((key) => (
+              {seriesKeys.map((key) => (
                 <linearGradient key={key} id={`gradient-${key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={SERIES_CONFIG[key].color} stopOpacity={0.4} />
-                  <stop offset="95%" stopColor={SERIES_CONFIG[key].color} stopOpacity={0} />
+                  <stop offset="5%" stopColor={getColorForKey(key, seriesKeys)} stopOpacity={0.4} />
+                  <stop offset="95%" stopColor={getColorForKey(key, seriesKeys)} stopOpacity={0} />
                 </linearGradient>
               ))}
             </defs>
@@ -77,13 +91,13 @@ export default function SpendingAreaChart({chartData}) {
             <YAxis tick={{ fill: "var(--text)", fontSize: 11 }} width={40} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: "12px" }} />
-            {SERIES_KEYS.map((key) => (
+            {seriesKeys.map((key) => (
               <Area
                 key={key}
                 type="monotone"
                 dataKey={key}
-                name={SERIES_CONFIG[key].label}
-                stroke={SERIES_CONFIG[key].color}
+                name={key}
+                stroke={getColorForKey(key, seriesKeys)}
                 fill={`url(#gradient-${key})`}
                 strokeWidth={2}
               />

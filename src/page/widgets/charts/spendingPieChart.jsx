@@ -7,12 +7,20 @@ import {
     ResponsiveContainer,
 } from "recharts";
 
-const SERIES_CONFIG = {
-    transaction: { label: "Transactions", color: "#3b82f6" },
-    receipt: { label: "Receipts", color: "#34d399" },
-};
+const COLOR_PALETTE = [
+  "#3b82f6", // blue
+  "#34d399", // green
+  "#f59e0b", // amber
+  "#ef4444", // red
+  "#a78bfa", // violet
+  "#22d3ee", // cyan
+  "#f472b6", // pink
+];
 
-const SERIES_KEYS = Object.keys(SERIES_CONFIG);
+function getColorForKey(key, allKeys) {
+  const index = allKeys.indexOf(key);
+  return COLOR_PALETTE[index % COLOR_PALETTE.length];
+}
 
 const renderActiveShape = ({
     cx,
@@ -24,29 +32,14 @@ const renderActiveShape = ({
     fill,
     payload,
 }) => {
-    const currencyEntries = Object.entries(payload.byCurrency || {}).filter(
-        ([, amt]) => amt > 0
-    );
-
     return (
         <g>
-            <text x={cx} y={cy} dy={-6 - (currencyEntries.length - 1) * 7} textAnchor="middle" fill={fill} fontSize={16} fontWeight={600}>
+            <text x={cx} y={cy} dy={-6} textAnchor="middle" fill={fill} fontSize={16} fontWeight={600}>
                 {payload.name}
             </text>
-            {currencyEntries.map(([currency, amt], i) => (
-                <text
-                    key={currency}
-                    x={cx}
-                    y={cy}
-                    dy={12 + i * 14}
-                    textAnchor="middle"
-                    fill="var(--text)"
-                    fontSize={13}
-                    opacity={0.8}
-                >
-                    {currency}: {amt.toFixed(2)}
-                </text>
-            ))}
+            <text x={cx} y={cy} dy={14} textAnchor="middle" fill="var(--text)" fontSize={13} opacity={0.8}>
+                {payload.value.toFixed(2)}
+            </text>
             <Sector
                 cx={cx}
                 cy={cy}
@@ -74,24 +67,23 @@ const renderActiveShape = ({
 export default function SpendingPieChart({ chartData, currentViewedMonth, isAnimationActive = true }) {
     const [activeIndex, setActiveIndex] = useState(null);
 
-    const pieData = SERIES_KEYS.map((key) => {
-        const byCurrency = {};
-        let total = 0;
+    const currencyKeys = Array.from(
+    new Set(
+      chartData.flatMap((bucket) =>
+        Object.entries(bucket)
+          .filter(([key, value]) => key !== "day" && typeof value === "number")
+          .map(([key]) => key)
+      )
+    )
+  ).sort();
 
-        chartData.forEach((day) => {
-            total += day[key] || 0;
-            const dayByCurrency = day[`${key}ByCurrency`] || {};
-            Object.entries(dayByCurrency).forEach(([currency, amt]) => {
-                byCurrency[currency] = (byCurrency[currency] || 0) + amt;
-            });
-        });
-
+    const pieData = currencyKeys.map((currency) => {
+        const total = chartData.reduce((sum, day) => sum + (day[currency] || 0), 0);
         return {
-            name: SERIES_CONFIG[key].label,
-            value: total,
-            byCurrency,
-            fill: SERIES_CONFIG[key].color,
-        };
+        name: currency,
+        value: total,
+        fill: getColorForKey(currency, currencyKeys),
+      };
     }).filter((entry) => entry.value > 0);
 
     if (pieData.length === 0) {

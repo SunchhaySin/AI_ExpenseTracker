@@ -32,14 +32,13 @@ export function ContextProvider({ children }) {
         const fetchUserUploads = async () => {
             try {
                 setIsLoading(true);
-                const res = await fetch(`http://localhost:3000/fetch/upload/${loggedInUser.userID}`)
+                const res = await fetch(`https://expensetrackerserver-agte.onrender.com/fetch/upload/${loggedInUser.userID}`)
 
                 if (!res.ok) throw new Error("Failed to fetch uploads");
 
                 const data = await res.json();
                 console.log(data.data)
                 setAllPaymentSlips(data.data)
-                // setAllPaymentSlips([...formatItems(invoiceData.data), ...formatItems(receiptData.data)])
 
             } catch (err) {
                 console.log(err)
