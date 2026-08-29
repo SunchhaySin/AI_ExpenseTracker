@@ -21,7 +21,7 @@ export default function UseRenameUpload() {
 
     try {
       if (loggedInUser) {
-        const response = await fetch(`https:/expensetrackerserver-agte.onrender.com/rename/upload/${id}`, {
+        const response = await fetch(`https://expensetrackerserver-agte.onrender.com/rename/upload/${id}`, {
           method: "PATCH",
           headers: { 'Content-Type': 'application/json' },
           credentials: "include",
