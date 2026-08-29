@@ -12,7 +12,7 @@ export function ContextProvider({ children }) {
 
     useEffect(() => {
         fetch('https://expensetrackerserver-agte.onrender.com/auth/me', {
-            credentials: 'include'
+            credentials: 'include',
         })
             .then(async (res) => {
                 const data = await res.json();
@@ -32,7 +32,9 @@ export function ContextProvider({ children }) {
         const fetchUserUploads = async () => {
             try {
                 setIsLoading(true);
-                const res = await fetch(`https://expensetrackerserver-agte.onrender.com/fetch/upload/${loggedInUser.userID}`)
+                const res = await fetch(`https://expensetrackerserver-agte.onrender.com/fetch/upload`, {
+                    credentials: "include",
+                })
 
                 if (!res.ok) throw new Error("Failed to fetch uploads");
 
@@ -48,7 +50,7 @@ export function ContextProvider({ children }) {
         };
 
         if(loggedInUser) fetchUserUploads();
-    }, [loggedInUser]);
+    }, [loggedInUser, setAllPaymentSlips]);
 
     const formatItems = (items) => items.map(item => ({
         ...item,

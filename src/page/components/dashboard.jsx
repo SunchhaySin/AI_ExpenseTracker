@@ -4,7 +4,7 @@ import { ClipLoader } from "react-spinners";
 import UseAppContext from "../../context";
 import SpendingAreaChart from "../widgets/charts/spendingAreaChart";
 import SpendingPieChart from "../widgets/charts/spendingPieChart";
-import UseFileUpload from "../../../hooks/useFileUpload";
+import UseFileUpload from "../../hooks/useFileUpload";
 import UploadsTable from "../widgets/UploadsTable";
 
 export default function Dashboard() {
@@ -48,12 +48,14 @@ export default function Dashboard() {
     });
   }
 
-  const paymentData = loggedInUser ? (allPaymentSlips ?? []) : [];
+  const paymentData = loggedInUser ? (allPaymentSlips ?? []) : (uploadedSlips ?? []);
 
   const parsedPayments = useMemo(() => {
-    return (loggedInUser ? paymentData : uploadedSlips)
+    return paymentData
       .map((item) => {
-        const rawDate = item.transaction_date || item.date || item.createdAt;
+        const rawDate = item.transaction_date || item.date;
+        if (!rawDate) return null; // Exclude from chart if data is not known or undefined
+
         const parsedDate = new Date(rawDate);
         if (isNaN(parsedDate)) return null;
 
@@ -164,9 +166,7 @@ export default function Dashboard() {
         {windowWidth <= 1275 && (
           <UploadsTable
             windowWidth={windowWidth}
-            loggedInUser={loggedInUser}
             paymentData={paymentData}
-            uploadedSlips={uploadedSlips}
             isLoading={isLoading}
             isUploadLoading={isUploadLoading}
             fileInputRef={fileInputRef}
@@ -176,7 +176,7 @@ export default function Dashboard() {
         )}
 
         <div
-          className={`flex items-center justify-between border border-(--border)/40 rounded-lg 
+          className={`flex items-center justify-between border border-(--border) rounded-lg 
               ${windowWidth > 600 ? "p-2" : "p-1"}`}
         >
           <button
@@ -236,9 +236,7 @@ export default function Dashboard() {
         {windowWidth > 1275 && (
           <UploadsTable
             windowWidth={windowWidth}
-            loggedInUser={loggedInUser}
             paymentData={paymentData}
-            uploadedSlips={uploadedSlips}
             isLoading={isLoading}
             isUploadLoading={isUploadLoading}
             fileInputRef={fileInputRef}
@@ -259,13 +257,10 @@ export default function Dashboard() {
             <div className="flex justify-between items-center mb-2">
               <div className="flex flex-col items-start">
                 <p className="text-(--text-orange) font-semibold">
-                  {viewedImage.merchantName ||
-                    viewedImage.paidTo ||
-                    viewedImage.name ||
-                    "Upload"}
+                  {viewedImage.name || viewedImage.merchantName || viewedImage.paidTo}
                 </p>
                 <p className="text-(--text-orange)/80 text-sm">
-                  {viewedImage.transaction_date.split("T")[0]}
+                 Date:  {viewedImage?.transaction_date?.split("T")[0] ?? "Undefined"}
                 </p>
               </div>
               <div className="flex items-center gap-5">

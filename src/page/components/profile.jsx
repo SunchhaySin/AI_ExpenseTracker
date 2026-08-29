@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import UseAppContext from "../../context";
 
 export default function Profile() {
-  const { loggedInUser } = UseAppContext();
+  const { loggedInUser, windowWidth } = UseAppContext();
 
   const navigate = useNavigate();
   const goToDashboard = () => {
@@ -11,15 +11,10 @@ export default function Profile() {
   };
 
   const [profile, setProfile] = useState(null);
-  const [imgFile, setImageFile] = useState("");
-  const [editProfile, setEditProfile] = useState(false);
   const fileInputRef = useRef(null);
 
-  const onEditBtn = () => {
-    setEditProfile(!editProfile);
-  };
 
-  const handleProfile = () => {
+  const handleProfile = (imgFile) => {
     if (!loggedInUser.userID) {
       alert("You're not Logged In");
       return;
@@ -41,7 +36,7 @@ export default function Profile() {
   const onFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setImageFile(file);
+    handleProfile(file);
   };
 
   const triggerFileDialog = () => {
@@ -49,9 +44,9 @@ export default function Profile() {
   };
   
   return (
-    <div className="flex-2 rounded-3xl h-full flex flex-col bg-(--bg) place-items-center">  
+    <div className="rounded-3xl h-full w-full flex flex-col items-center gap-5 bg-(--bg) p-4">
       <div
-        className="flex items-center gap-3 self-start ml-10 mt-15"
+        className="flex items-center gap-3 self-start text-(--text-orange)"
         onClick={goToDashboard}
       >
         <svg
@@ -59,101 +54,152 @@ export default function Profile() {
           height="30px"
           viewBox="0 -960 960 960"
           width="30px"
-          fill="#E3E3E3"
+          fill="currentColor"
         >
           <path d="M280-200v-80h284q63 0 109.5-40T720-420q0-60-46.5-100T564-560H312l104 104-56 56-200-200 200-200 56 56-104 104h252q97 0 166.5 63T800-420q0 94-69.5 157T564-200H280Z" />
         </svg>
-        <p className="text-(--text-green) text-lg">Profile</p>
+        <p className="border border-(--bg2)/80 rounded-lg py-0.5 px-2">
+          User Profile
+        </p>
       </div>
-      <p className="self-start ml-20 text-(--sub-text-green) text-sm">
-        Your Personal Profile & Information
-      </p>
-      <div className="w-40 h-40 rounded-full bg-(--code-bg) text-(--text-l)">
+      <div className="w-30 h-30 rounded-full bg-(--code-bg) text-(--text) text-sm flex items-center justify-center border border-(--border)">
         {profile ? (
           <img
             src={profile}
-            height={200}
             alt={"Profile Image"}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-full"
           />
         ) : (
-          "Profile Not Set"
+            <div className="flex flex-col gap-1 items-center">
+               <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={onFileChange}
+                accept=".jpg,.png,"
+              />
+              <p>Profile Not Set</p>
+              <div 
+                onClick={triggerFileDialog}
+                className="flex items-center text-[10px] text-(--text) hover:text-(--text-orange) border border-(--bg2) rounded-full px-1">
+                <p>Add Profile</p>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="20px"
+                  viewBox="0 -960 960 960"
+                  width="20px"
+                  fill="currentColor"
+                >
+                  <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+                </svg>
+              </div>
+            </div>
         )}
       </div>
-      <ul className="mt-10 flex flex-col gap-2">
-        <li className="grid grid-cols-2 items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
-          <p className="text-(--text-orange) text-lg p-2 rounded-lg">Email</p>
+      <ul className="w-full max-w-3xl flex flex-col border border-(--border) bg-(--code-bg) rounded-2xl px-2 py-1">
+        <li className="grid grid-cols-[100px_minmax(0,1fr)_40px] gap-5 items-center px-4 rounded-xl">
+          <p className="bg-(--bg2)/90 text-black p-1 rounded-lg text-center">
+            Email
+          </p>
           <input
             value={loggedInUser?.email || "Info Not Available"}
             readOnly={true}
-            className="bg-(--code-bg) p-2 text-center text-(--text) rounded-lg"
+            className="bg-(--bg-green) p-1 text-center text-(--text) rounded-lg"
           />
+          <button className="text-(--text) hover:text-(--text-orange) text-xs p-1 flex flex-col items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height={
+                windowWidth > 1275
+                  ? "24px"
+                  : windowWidth > 600
+                    ? "20px"
+                    : "16px"
+              }
+              viewBox="0 -960 960 960"
+              width={
+                windowWidth > 1275
+                  ? "24px"
+                  : windowWidth > 600
+                    ? "20px"
+                    : "16px"
+              }
+              fill="currentColor"
+            >
+              <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+            </svg>
+            <p>Edit</p>
+          </button>
         </li>
-        <li className="grid grid-cols-2 items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
-          <p className="text-(--text-orange) text-lg p-2 rounded-lg">
+        <li className="grid grid-cols-[100px_minmax(0,1fr)_40px] gap-5 items-center px-4 rounded-xl">
+          <p className="bg-(--bg2)/90 text-black p-1 rounded-lg text-center">
             Username
           </p>
           <input
             value={loggedInUser?.username || "Info Not Available"}
             readOnly={true}
-            className="bg-(--code-bg) p-2 text-center text-(--text) rounded-lg"
+            className="bg-(--bg-green) p-1 text-center text-(--text) rounded-lg"
           />
+          <button className="text-(--text) hover:text-(--text-orange) text-xs p-1 flex flex-col items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height={
+                windowWidth > 1275
+                  ? "24px"
+                  : windowWidth > 600
+                    ? "20px"
+                    : "16px"
+              }
+              viewBox="0 -960 960 960"
+              width={
+                windowWidth > 1275
+                  ? "24px"
+                  : windowWidth > 600
+                    ? "20px"
+                    : "16px"
+              }
+              fill="currentColor"
+            >
+              <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+            </svg>
+            <p>Edit</p>
+          </button>
         </li>
-        <li className="grid grid-cols-2 items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
-          <p className="text-(--text-orange) text-lg p-2 rounded-lg">
+        <li className="grid grid-cols-[100px_minmax(0,1fr)_40px] items-center gap-5 px-4 rounded-xl">
+          <p className="bg-(--bg2)/90 text-black p-1 rounded-lg text-center">
             Password
           </p>
           <input
             value={loggedInUser?.username || "Info Not Available"}
             readOnly={true}
-            className="bg-(--code-bg) p-2 text-center text-(--text) rounded-lg"
+            className="bg-(--bg-green) p-1 text-center text-(--text) rounded-lg"
           />
-        </li>
-        <li className="grid grid-cols-2 items-center gap-15 bg-(--bg-green) px-15 py-2 rounded-lg">
-          <p className="text-(--text-orange) text-lg p-2 rounded-lg">
-            Profile Avatar
-          </p>
-          <button
-            onClick={onEditBtn}
-            className="bg-(--bg2) text-(--text-d) p-2 rounded-lg hover:bg-(--text-orange)"
-          >
-            Set Profile
+          <button className="text-(--text) hover:text-(--text-orange) text-xs p-1 flex flex-col items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height={
+                windowWidth > 1275
+                  ? "24px"
+                  : windowWidth > 600
+                    ? "20px"
+                    : "16px"
+              }
+              viewBox="0 -960 960 960"
+              width={
+                windowWidth > 1275
+                  ? "24px"
+                  : windowWidth > 600
+                    ? "20px"
+                    : "16px"
+              }
+              fill="currentColor"
+            >
+              <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+            </svg>
+            <p>Edit</p>
           </button>
         </li>
       </ul>
-      {editProfile && (
-        <div className="flex mt-10 bg-(--bg2) p-2 gap-5 items-center rounded-lg">
-          <p className="font-semibold">Upload Picture:</p>
-          <input
-            type="file"
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            onChange={onFileChange}
-            accept=".jpg,.png,"
-          />
-          <input
-            value={imgFile ? "Profile Image Set" : "Choose a profile picture"}
-            readOnly={true}
-            className="bg-(--code-bg) p-2 rounded-lg text-(--text-l)"
-          />
-          <svg
-            onClick={triggerFileDialog}
-            xmlns="http://www.w3.org/2000/svg"
-            height="24px"
-            viewBox="0 -960 960 960"
-            width="24px"
-            fill="#E3E3E3"
-          >
-            <path d="M720-330q0 104-73 177T470-80q-104 0-177-73t-73-177v-370q0-75 52.5-127.5T400-880q75 0 127.5 52.5T580-700v350q0 46-32 78t-78 32q-46 0-78-32t-32-78v-370h80v370q0 13 8.5 21.5T470-320q13 0 21.5-8.5T500-350v-350q-1-42-29.5-71T400-800q-42 0-71 29t-29 71v370q-1 71 49 120.5T470-160q70 0 119-49.5T640-330v-390h80v390Z" />
-          </svg>
-          <button
-            onClick={handleProfile}
-            className="bg-(--text-green) rounded-full p-1 text-(--text-d)"
-          >
-            Confirm
-          </button>
-        </div>
-      )}
     </div>
   );
 }

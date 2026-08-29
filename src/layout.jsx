@@ -62,7 +62,11 @@ const spacingClass =
         <div className="h-[100lvh] flex flex-col ">
             <Header />
             <div className={`flex-1 min-h-0 grid transition-[grid-template-columns] duration-400 ease-in-out ${gridCols} ${spacingClass}`}>
-                {windowWidth > 750 && <Sidebar />}
+                {windowWidth > 750 && (
+                    <div className="min-w-0 h-full">
+                        <Sidebar />
+                    </div>
+                )}
                 <Outlet />
 
                 {isDesktop && (
