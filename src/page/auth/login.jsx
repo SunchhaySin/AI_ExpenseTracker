@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
-import UseAppContext from "../../context";
+import UseAppContext, { API_BASE_URL } from "../../context";
+import { setToken, getAuthHeader } from "../../utils/token";
 
 export default function LoginPage() {
   const [loginForm, setLoginForm] = useState({
@@ -21,12 +22,9 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await fetch(
-        "https://expensetrackerserver-agte.onrender.com/login",
-        {
+      const res = await fetch(`${API_BASE_URL}/login`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
+          headers: { "Content-Type": "application/json"},
           body: JSON.stringify(loginForm),
         },
       );
@@ -36,7 +34,9 @@ export default function LoginPage() {
         setIsLoading(false);
         return;
       }
-      console.log(data);
+
+      setToken(data.token); // Store token in LocalStorage
+
       setError(null);
       setLoggedInUser({
         userID: data.userID,

@@ -8,6 +8,7 @@ export default function UploadsTable({
   paymentData,
   isLoading,
   isUploadLoading = false,
+  rawPreviews = [],
   fileInputRef,
   handleFileUpload,
   onViewImage,
@@ -145,9 +146,29 @@ export default function UploadsTable({
 
       <ul className="relative p-2 text-xs h-full min-h-0 flex flex-col">
         {isUploadLoading && (
-          <div className="flex items-center gap-2 text-(--text-orange)/80 text-sm p-1 mb-1">
-            <p>Scanning upload...</p>
-            <ClipLoader color="currentColor" size={14} />
+          <div className="flex flex-col gap-1 mb-1">
+            <div className="flex items-center gap-2 text-(--text-orange)/80 text-sm p-1">
+              <p>Scanning upload...</p>
+              <ClipLoader color="currentColor" size={14} />
+            </div>
+            {rawPreviews.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {rawPreviews.map((preview) => (
+                  <div
+                    key={preview.id}
+                    onClick={() => onViewImage?.(preview)}
+                    className="shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-(--border) cursor-pointer"
+                    title={preview.name}
+                  >
+                    <img
+                      src={preview.previewUrl}
+                      alt={preview.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
