@@ -4,16 +4,49 @@ import { getAuthHeader } from "./utils/token";
 const AppContext = createContext(null);
 
 export const API_BASE_URL = "https://expensetrackerserver-agte.onrender.com";
-// export const API_BASE_URL = "http://localhost:3000";
 
+const fetchProfileImage = async (setProfileImage) => {
+    try {
+        const res = await fetch(`${API_BASE_URL}/profile/picture`, {
+            headers: { ...getAuthHeader() },
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.error || "Failed to fetch profile image");
+        }
+
+        setProfileImage(data.profileImage);
+    } catch (err) {
+        console.error("Error fetching profile image:", err);
+    }
+};
 
 export function ContextProvider({ children }) {
     const [loggedInUser, setLoggedInUser] = useState(null);
+    const [profileImage, setProfileImage] = useState(null); // Stores the profile image data fetched from the server
+
     const [windowWidth, setWindowWidth] = useState(0);
     const [allPaymentSlips, setAllPaymentSlips] = useState([]); // For authenticated users (uploaded slips are saved in database record)
     const [uploadedSlips, setUploadSlips] = useState([]); // For Unauthenticated users (uploads will disappear on refresh)
     const [isLoading, setIsLoading] = useState(false); // Stores the loading state of fetchUserUploads function
+
+    // Conversin Panel and Profile Page are interchangeble on desktop displays
     const [isOpenConversion, setIsOpenConversion] = useState(false);
+    const [isOpenProfile, setIsOpenProfile] = useState(false);
+
+    const openConversion = () => {
+        setIsOpenProfile(false);
+        setIsOpenConversion(true);
+    };
+    const openProfile = () => {
+        setIsOpenConversion(false);
+        setIsOpenProfile(true);
+    };
+    const closePanels = () => {
+        setIsOpenConversion(false);
+        setIsOpenProfile(false);
+    };
 
     useEffect(() => {
          const token = localStorage.getItem("token");
@@ -64,6 +97,28 @@ export function ContextProvider({ children }) {
         if(loggedInUser) fetchUserUploads();
     }, [loggedInUser, setAllPaymentSlips]);
 
+    // fetch user profile asychronously (onrefresh || onreload)
+    useEffect(() => {
+        if (!loggedInUser) return;
+        const fetchProfileImage = async (setProfileImage) => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/profile/picture`, {
+                    headers: { ...getAuthHeader() },
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || "Failed to fetch profile image");
+                }
+
+                setProfileImage(data.profileImage);
+            } catch (err) {
+                console.error("Error fetching profile image:", err);
+            }
+        };
+        if (loggedInUser) fetchProfileImage(setProfileImage);
+    }, [loggedInUser]);
+
     useEffect(() => {
         setWindowWidth(window.innerWidth);
         const handleResize = () => setWindowWidth(window.innerWidth);
@@ -105,8 +160,18 @@ export function ContextProvider({ children }) {
 
                 isOpenConversion,
                 setIsOpenConversion,
+                isOpenProfile,
+                setIsOpenProfile,
+
+                openConversion,
+                openProfile,
+                closePanels,
 
                 API_BASE_URL,
+
+                profileImage,
+                setProfileImage,
+                fetchProfilePicture: () => fetchProfileImage(setProfileImage),
             }}
         >
             {children}
