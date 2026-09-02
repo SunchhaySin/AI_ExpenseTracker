@@ -81,7 +81,13 @@ export default function Dashboard() {
         const rawDate = item.transaction_date || item.date;
         if (!rawDate) return null; // Exclude from chart if data is not known or undefined
 
-        const parsedDate = new Date(rawDate);
+        const extractedDate = String(rawDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!extractedDate) return null;
+
+        const [, year, month, day] = extractedDate;
+
+        // Build a local Date at midnight using the literal digits - no UTC conversion, no timezone shift
+        const parsedDate = new Date(Number(year), Number(month) - 1, Number(day));
         if (isNaN(parsedDate)) return null;
 
         const amountValue = parseFloat(item.amount ?? item.total_amount);
@@ -91,6 +97,8 @@ export default function Dashboard() {
           date: parsedDate,
           amount: amountValue,
           currency: item.currency || "Unknown",
+          paidTo: item.paidTo || item.name || "Unknown",
+          paymentMethod: item.payment_method || null,
         };
       })
       .filter(Boolean);
@@ -145,6 +153,7 @@ export default function Dashboard() {
       );
        const bucket = {
         day: dayDate.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        payments: []
       };
       currenciesThisMonth.forEach((currency) => {
         bucket[currency] = 0;
@@ -159,6 +168,14 @@ export default function Dashboard() {
       if (!bucket) return;
 
       bucket[p.currency] = (bucket[p.currency] || 0) + p.amount;
+
+      bucket.payments.push({
+        amount: p.amount,
+        currency: p.currency, 
+        date: p.date,
+        paidTo: p.paidTo,          
+        paymentMethod: p.paymentMethod,
+      });
     });
 
     return dayBuckets;

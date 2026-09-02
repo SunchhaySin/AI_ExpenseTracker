@@ -3,15 +3,15 @@
 :root {
   --text: #000000;
   --text-h: #08060d;
-  --text-orange: #af5811;
+  --text-orange: #a25312;
   --text-green: #088a7d;
   --sub-text-green: #006B5F;
   --text-light-orange: #b9672c;
-  --bg: #d0cddd;
-  --bg2: #f08d24;
-  --border: #afadb4;
-  --code-bg: #d6d6e6;
-  --bg-green: #0ba896;
+  --bg: #D0D0CC;
+  --bg2: #D9791C;
+  --border: #AAA8AF;
+  --code-bg: #C2C2BE;
+  --bg-green: #23c28a;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
@@ -23,7 +23,7 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  background-color: #afb0b8;
+  background-color: #B5B5B1;
 }
 
 
@@ -38,7 +38,7 @@
     --bg: #1B1B23;
     --border: #46464F;
     --bg2: #B95F00;
-    --bg-green: #003731;
+    --bg-green: #0e5c34;
     --code-bg: #1f2028;
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
@@ -53,4 +53,12 @@
 
 body {
   margin: 0;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"].light-mode {
+  color-scheme: light;
 }
