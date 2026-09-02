@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react'
-import UseAppContext from '../context';
+import UseAppContext, { API_BASE_URL } from '../context';
+import { getAuthHeader } from '../utils/token';
 
 export default function UseRenameUpload() {
   const [renamingId, setRenamingId] = useState(null);
@@ -21,10 +22,12 @@ export default function UseRenameUpload() {
 
     try {
       if (loggedInUser) {
-        const response = await fetch(`https://expensetrackerserver-agte.onrender.com/rename/upload/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/rename/upload/${id}`, {
           method: "PATCH",
-          headers: { 'Content-Type': 'application/json' },
-          credentials: "include",
+          headers: { 
+            'Content-Type': 'application/json',
+            ...getAuthHeader(),
+          },
           body: JSON.stringify({ fileName }),
         })
 

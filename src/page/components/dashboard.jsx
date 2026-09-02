@@ -20,9 +20,10 @@ export default function Dashboard() {
     fileInputRef,
     handleFileUpload,
     isLoading: isUploadLoading, // alliasing isLoading from the UseFileUpload Hook
+    rawFiles, // File[] currently being scanned
   } = UseFileUpload();
 
-  const [viewedImage, setViewedImage] = useState(null);
+  const [viewedImage, setViewedImage] = useState(null); // Viewing Images that includes the direct image's data url from the backend
 
   const handleViewImage = (item) => {
     setViewedImage(item);
@@ -31,6 +32,30 @@ export default function Dashboard() {
   const closeImageView = () => {
     setViewedImage(null);
   };
+
+  const [rawPreviews, setRawPreviews] = useState([]);
+
+    useEffect(() => {
+    if (!rawFiles || rawFiles.length === 0) {
+      setRawPreviews([]);
+      return;
+    }
+
+    const previews = rawFiles.map((file, i) => ({
+      id: `raw-${i}-${file.name}`,
+      name: file.name,
+      previewUrl: URL.createObjectURL(file),
+      isPreview: true,
+    }));
+
+    setRawPreviews(previews);
+
+    // Revoke these object URLs when rawFiles changes again or on unmount
+    return () => {
+      previews.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+    };
+  }, [rawFiles]);
+
 
   // DATE/TIME Helper Functions
   function startOfMonth(date) {
@@ -160,6 +185,13 @@ export default function Dashboard() {
     URL.revokeObjectURL(url);
   }
 
+   function downloadRawPreview(previewUrl, filename = "upload") {
+    const a = document.createElement("a");
+    a.href = previewUrl;
+    a.download = filename;
+    a.click();
+  }
+
   return (
     <div className="bg-(--bg) w-full rounded-3xl overflow-y-auto py-4 px-6">
       <div className="flex flex-col min-h-0 h-full text-(--text-l) gap-2">
@@ -172,6 +204,7 @@ export default function Dashboard() {
             fileInputRef={fileInputRef}
             handleFileUpload={handleFileUpload}
             onViewImage={handleViewImage}
+            rawPreviews={rawPreviews}
           />
         )}
 
@@ -242,6 +275,7 @@ export default function Dashboard() {
             fileInputRef={fileInputRef}
             handleFileUpload={handleFileUpload}
             onViewImage={handleViewImage}
+            rawPreviews={rawPreviews}
           />
         )}
       </div>
@@ -260,33 +294,53 @@ export default function Dashboard() {
                   {viewedImage.name || viewedImage.merchantName || viewedImage.paidTo}
                 </p>
                 <p className="text-(--text-orange)/80 text-sm">
-                 Date:  {viewedImage?.transaction_date?.split("T")[0] ?? "Undefined"}
+                 Date:  {viewedImage?.transaction_date?.split("T")[0] || viewedImage?.date || ""}
                 </p>
               </div>
               <div className="flex items-center gap-5">
-                <button 
-                  onClick={() => {
-                    const today = new Date().toISOString().split("T")[0];
-                    DownloadImageFromUrl(viewedImage?.image?.image, `receipt-${viewedImage.id}-${today}.jpg`)
-                  }}
-                  className={`flex items-center gap-2 border border-(--bg2)/60 rounded-lg ${windowWidth > 750 ? "text-sm" : "text-xs"} bg-(--bg2) text-black px-1 py-0.5`}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    height={windowWidth > 750 ? "22px" : "18px"}
-                    viewBox="0 -960 960 960"
-                    width={windowWidth > 750 ? "22px" : "18px"}
-                    fill="currentColor"
+                {viewedImage.isPreview ? (
+                  <button
+                    onClick={() => downloadRawPreview(viewedImage.previewUrl, viewedImage.name)}
+                    className={`flex items-center gap-2 border border-(--bg2)/60 rounded-lg ${windowWidth > 750 ? "text-sm" : "text-xs"} bg-(--bg2) text-black px-1 py-0.5`}
                   >
-                    <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
-                  </svg>
-                  <p>Download Image</p>
-                </button>
+                    <svg xmlns="http://www.w3.org/2000/svg" height={windowWidth > 750 ? "22px" : "18px"} viewBox="0 -960 960 960" width={windowWidth > 750 ? "22px" : "18px"} fill="currentColor">
+                      <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+                    </svg>
+                    <p>Download Image</p>
+                  </button>
+                ) : (
+                  viewedImage.image?.image && (
+                  <button 
+                    onClick={() => {
+                      const today = new Date().toISOString().split("T")[0];
+                      DownloadImageFromUrl(viewedImage?.image?.image, `receipt-${viewedImage.id}-${today}.jpg`)
+                    }}
+                    className={`flex items-center gap-2 border border-(--bg2)/60 rounded-lg ${windowWidth > 750 ? "text-sm" : "text-xs"} bg-(--bg2) text-black px-1 py-0.5`}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      height={windowWidth > 750 ? "22px" : "18px"}
+                      viewBox="0 -960 960 960"
+                      width={windowWidth > 750 ? "22px" : "18px"}
+                      fill="currentColor"
+                    >
+                      <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+                    </svg>
+                    <p>Download Image</p>
+                  </button>
+                  )
+                )}
                 <button onClick={closeImageView} className="text-(--text)">
                   ✕
                 </button>
               </div>
             </div>
-            {viewedImage.image?.image ? (
+            {viewedImage.isPreview ? (
+              <img
+                src={viewedImage.previewUrl}
+                alt={viewedImage.name}
+                className={`${windowWidth > 1275 ? "max-h-180" : windowWidth > 1000 ? "max-h-160" : windowWidth > 750 ? "max-h-140" : "max-h-120"} w-full object-contain rounded-lg`}
+              />
+            ) : viewedImage.image?.image ? (
               <img
                 src={viewedImage.image.image}
                 alt="Upload"

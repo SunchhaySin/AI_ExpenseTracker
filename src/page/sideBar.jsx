@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ClipLoader } from 'react-spinners'
 import UseAppContext from '../context'
 import UseFileUpload from '../hooks/useFileUpload'
@@ -17,6 +17,7 @@ export default function Sidebar() {
     fileInputRef,
     isLoading,
     handleFileUpload,
+    rawFiles,
   } = UseFileUpload();
 
   const { 
@@ -33,6 +34,27 @@ export default function Sidebar() {
   const [isRenaming, setIsRenaming] = useState(null);
   const [renameId, setRenameId] = useState(false);
   const [fileName, setFileName] = useState("");
+
+  const [rawPreviews, setRawPreviews] = useState([]);
+
+  useEffect(() => {
+    if (!rawFiles || rawFiles.length === 0) {
+      setRawPreviews([]);
+      return;
+    }
+
+    const previews = rawFiles.map((file, i) => ({
+      id: `raw-${i}-${file.name}`,
+      name: file.name,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setRawPreviews(previews);
+
+    return () => {
+      previews.forEach((p) => URL.revokeObjectURL(p.previewUrl));
+    };
+  }, [rawFiles]);
 
   return (
     <div
@@ -95,9 +117,28 @@ export default function Sidebar() {
         className={`flex flex-col min-w-0 ${windowWidth <= 750 && "flex-1 max-h-45"}`}
       >
         {isLoading ? (
-          <div className="flex items-center gap-2 text-(--text-orange)/80 p-1 mb-1">
-            <p>Scanning upload...</p>
-            <ClipLoader color="currentColor" size={18} />
+           <div className="flex flex-col gap-1 mb-1">
+            <div className="flex items-center gap-2 text-(--text-orange)/80 p-1">
+              <p>Scanning upload...</p>
+              <ClipLoader color="currentColor" size={18} />
+            </div>
+            {rawPreviews.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {rawPreviews.map((preview) => (
+                  <div
+                    key={preview.id}
+                    className="shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-(--border)"
+                    title={preview.name}
+                  >
+                    <img
+                      src={preview.previewUrl}
+                      alt={preview.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (loggedInUser ? allPaymentSlips : uploadedSlips).length === 0 ? (
           <p

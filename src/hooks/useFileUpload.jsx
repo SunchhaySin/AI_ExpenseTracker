@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback } from 'react'
-import UseAppContext from '../context';
+import UseAppContext, { API_BASE_URL } from '../context';
+import { getAuthHeader } from '../utils/token';
 
 export default function UseFileUpload() {
     const {
@@ -11,6 +12,7 @@ export default function UseFileUpload() {
     const fileInputRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    const [rawFiles, setRawFiles] = useState([]); // Saves the Raw File Object directly from the fileInput upload
 
     function convertToBase64(file) {
         return new Promise((resolve, reject) => {
@@ -30,10 +32,12 @@ export default function UseFileUpload() {
                 return null;
             }
 
-            const result = await fetch('https://expensetrackerserver-agte.onrender.com/api/scan', {
+            const result = await fetch(`${API_BASE_URL}/api/scan`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader(), 
+                },
                 body: JSON.stringify({ images: base64File })
             });
 
@@ -68,6 +72,8 @@ export default function UseFileUpload() {
 
     const handleFileUpload = useCallback(async (e) => {
         const files = Array.from(e.target.files);
+        setRawFiles(files);
+        console.log("Uploading New: ", files)
         if (files.length === 0) return;
 
         setIsLoading(true);
@@ -86,11 +92,18 @@ export default function UseFileUpload() {
             }
 
             if (loggedInUser) {
-                setAllPaymentSlips((prev) => [...prev, ...validItems]);
+                const normalizedItems = validItems.map((item) => ({
+                    ...item,
+                    image: { image: item.image, mimeType: item.mimeType }, // match backend's { image, mimeType } shape
+                }));
+                setAllPaymentSlips((prev) => [...prev, ...normalizedItems]);
 
-                const res = await fetch('https://expensetrackerserver-agte.onrender.com/save/uploads', {
+                const res = await fetch(`${API_BASE_URL}/save/uploads`, {
                     method: "POST",
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader(), 
+                    },
                     credentials: 'include',
                     body: JSON.stringify({ uploadItems: validItems }), // array — batched
                 });
@@ -101,13 +114,17 @@ export default function UseFileUpload() {
                     alert("Failed to save some uploads.");
                 }
                 const data = await res.json()
-                alert(data.message)
                 console.log({
                     message: data.message,
                     data: data.data
                 })
+                alert(data.message)
             } else {
-                setUploadSlips((prev) => [...prev, ...validItems]);
+                const normalizedItems = validItems.map((item) => ({
+                    ...item,
+                    image: { image: item.image, mimeType: item.mimeType },
+                }));
+                setUploadSlips((prev) => [...prev, ...normalizedItems]);
             }
         } finally {
             setIsLoading(false);
@@ -119,7 +136,7 @@ export default function UseFileUpload() {
     return {
         fileInputRef,
         isLoading,
-
+        rawFiles,
         handleFileUpload,
         convertToBase64,
     };

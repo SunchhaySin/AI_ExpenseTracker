@@ -1,5 +1,6 @@
 import React, {useState, useCallback} from 'react'
-import UseAppContext from "../context";
+import UseAppContext, { API_BASE_URL } from "../context";
+import { getAuthHeader } from '../utils/token';
 
 export default function UseFileDelete() {
     const {
@@ -23,10 +24,12 @@ export default function UseFileDelete() {
         setDeletingId(uploaded_file.id)
         try {
             if(loggedInUser) {
-                const response = await fetch(`https://expensetrackerserver-agte.onrender.com/delete/upload/${uploaded_file.id}`, {
+                const response = await fetch(`${API_BASE_URL}/delete/upload/${uploaded_file.id}`, {
                     method: "DELETE",
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader(),
+                    },
                 })
                 if(!response.ok) {
                     const error = await response.json()

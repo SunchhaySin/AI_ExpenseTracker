@@ -1,6 +1,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { getAuthHeader } from "./utils/token";
 
 const AppContext = createContext(null);
+
+export const API_BASE_URL = "https://expensetrackerserver-agte.onrender.com";
+// export const API_BASE_URL = "http://localhost:3000";
+
 
 export function ContextProvider({ children }) {
     const [loggedInUser, setLoggedInUser] = useState(null);
@@ -11,8 +16,14 @@ export function ContextProvider({ children }) {
     const [isOpenConversion, setIsOpenConversion] = useState(false);
 
     useEffect(() => {
-        fetch('https://expensetrackerserver-agte.onrender.com/auth/me', {
-            credentials: 'include',
+         const token = localStorage.getItem("token");
+            if (!token) {
+                setLoggedInUser(null);
+                return;
+            }
+
+        fetch(`${API_BASE_URL}/auth/me`, {
+            headers: { ...getAuthHeader()}
         })
             .then(async (res) => {
                 const data = await res.json();
@@ -32,8 +43,9 @@ export function ContextProvider({ children }) {
         const fetchUserUploads = async () => {
             try {
                 setIsLoading(true);
-                const res = await fetch(`https://expensetrackerserver-agte.onrender.com/fetch/upload`, {
-                    credentials: "include",
+                const res = await fetch(`${API_BASE_URL}/fetch/upload`, {
+                    headers: { ...getAuthHeader()}
+
                 })
 
                 if (!res.ok) throw new Error("Failed to fetch uploads");
@@ -51,11 +63,6 @@ export function ContextProvider({ children }) {
 
         if(loggedInUser) fetchUserUploads();
     }, [loggedInUser, setAllPaymentSlips]);
-
-    const formatItems = (items) => items.map(item => ({
-        ...item,
-        date: new Date(item.date).toDateString()
-    }));
 
     useEffect(() => {
         setWindowWidth(window.innerWidth);
@@ -98,6 +105,8 @@ export function ContextProvider({ children }) {
 
                 isOpenConversion,
                 setIsOpenConversion,
+
+                API_BASE_URL,
             }}
         >
             {children}

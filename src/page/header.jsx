@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import UseAppContext from "../context";
 import { useNavigate } from "react-router-dom";
+import { clearToken } from "../utils/token";
 
 export default function Header() {
     const {
@@ -37,6 +38,7 @@ export default function Header() {
             });
             setDropdown(false);
             setLoggedInUser(null);
+            clearToken(); // deletes token from localStorage
         } catch (err) {
             console.log(err.message);
         }
