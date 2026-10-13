@@ -127,7 +127,7 @@ export default function CurrencyConversion() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col gap-2 bg-(--bg) rounded-3xl p-4">
+    <div className="w-full h-full min-h-0 flex flex-col gap-2 bg-(--bg) rounded-3xl p-4">
       <div className={`w-full flex items-center justify-between text-(--text-orange) border border-(--border) rounded-lg font-semibold p-1.5
           ${windowWidth > 1670 ? "px-4" : windowWidth > 1600 ? "px-2" : windowWidth > 1275 ? "text-[14px] px-1": "text-md justify-around px-3" } `}>
         <p>Currency Converter</p>
@@ -140,7 +140,7 @@ export default function CurrencyConversion() {
                       ${windowWidth > 1500 ? "w-26" : windowWidth > 1300 ? "w-24 text-[11px]" : isMobile ? "w-26 text-md" : "w-22 text-[10px]"}`}
         />
       </div>
-      <div className="w-full flex items-center justify-center gap-4 py-1 text-(--text-orange) overflow-x-hidden">
+      <div className="w-full shrink-0 flex items-center justify-center gap-4 py-1 text-(--text-orange) overflow-x-hidden">
         {/* Covert From */}
 
         <select
@@ -217,7 +217,7 @@ export default function CurrencyConversion() {
         <p className="text-sm text-(--text-green) font-semibold self-center">Conversion Rate: {conversionRate}</p>
       )}
       {showConversion && (
-        <div className="w-full flex flex-col gap-2 rounded-xl my-2">
+        <div className="w-full flex flex-col gap-2 rounded-xl my-2 overflow-y-auto">
             {conversionAmounts.map((amount) => (
             <div
                 key={amount}
