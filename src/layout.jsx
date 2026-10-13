@@ -46,7 +46,7 @@ function LayoutStructure() {
   const isDesktop = windowWidth >= 1275;
   const isMobile = windowWidth <= 750;
   const showSidebar = windowWidth > 750;
-  const isNarrowSidebar = showSidebar && windowWidth < 1080;
+  const isNarrowSidebar = showSidebar && windowWidth < 1150;
   const isCompactDesktop = isDesktop && windowWidth < 1400;
   const showSidePanel = isDesktop && (isOpenConversion || isOpenProfile);
 
@@ -67,14 +67,14 @@ function LayoutStructure() {
     windowWidth < 600
       ? "gap-2 p-4"
       : windowWidth < 1000
-        ? "gap-4 p-10"
+        ? "gap-4 p-8"
         : !isDesktop
-          ? "gap-6 p-16"
+          ? "gap-6 p-12"
           : showSidePanel
-            ? "gap-3 py-20 px-8"
-            : "gap-10 p-20";
+            ? "gap-3 py-8 px-6"
+            : "gap-10 p-10";
 
-   const prevIsDesktop = useRef(isDesktop);
+  const prevIsDesktop = useRef(isDesktop);
 
   // Transition INTO non-desktop: carry whichever panel was open into the URL
   useEffect(() => {
@@ -134,7 +134,7 @@ function LayoutStructure() {
   }, [isMobile, location.pathname, setIsOpenProfile, setIsOpenConversion]);
 
   return (
-    <div className="h-[100lvh] flex flex-col ">
+    <div className="h-lvh flex flex-col">
       <Header />
       <div
         className={`flex-1 min-h-0 grid transition-[grid-template-columns] duration-400 ease-in-out ${gridCols} ${spacingClass}`}
